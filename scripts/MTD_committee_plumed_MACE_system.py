@@ -2,6 +2,7 @@ import argparse
 from ase.calculators.plumed import Plumed
 from ase import units
 from ase.io import read, write
+from ase.constraints import FixAtoms
 from mace.calculators import MACECalculator
 from ase.md.verlet import VelocityVerlet
 from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
@@ -19,6 +20,7 @@ parser = argparse.ArgumentParser(description="Run MTD with MACE committee and PL
 parser.add_argument("--input_file", type=str, help="Initial structure file (.traj)")
 parser.add_argument("--model_paths", type=str, nargs='+', required=True, help="List of trained MACE model paths")
 parser.add_argument("--timestep", type=float, default=1.0, help="MD timestep in fs")
+parser.add_argument("--z_threshold", type=float, default=2.0, help="z-threshold in Å for fixing slab atoms")
 parser.add_argument("--nsteps", type=int, default=2500, help="Number of MD steps")
 parser.add_argument("--temperature", type=float, default=400, help="Temperature in Kelvin")
 parser.add_argument("--pace", type=int, default=400, help="METAD PACE")
@@ -56,6 +58,12 @@ plumed_input = [
 
 # === Setup calc ===
 atoms.calc = Plumed(calc=mace_committee, input=plumed_input, timestep=args.timestep, atoms=atoms, kT=kT)
+z_threshold = args.z_threshold
+print(z_threshold)
+fixed_indices = [i for i, atom in enumerate(atoms) if atom.position[2] < z_threshold]
+print(fixed_indices)
+fix_constraint = FixAtoms(indices=fixed_indices)
+atoms.set_constraint(fix_constraint)
 MaxwellBoltzmannDistribution(atoms, temperature_K=args.temperature)
 dyn = VelocityVerlet(atoms, timestep=args.timestep * units.fs)
 
