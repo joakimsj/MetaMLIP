@@ -49,7 +49,7 @@ process runMACE {
       --temperature 400 \
       --pace 400 \
       --height 4.0 \
-      --z_threshold 2.6 \      
+      --z_threshold 2.6 \
       --sigma1 0.1 \
       --sigma2 0.2 \
       --biasfactor 5 \
