@@ -49,6 +49,7 @@ process runMACE {
       --temperature 400 \
       --pace 400 \
       --height 4.0 \
+      --z_threshold 2.6 \      
       --sigma1 0.1 \
       --sigma2 0.2 \
       --biasfactor 5 \
@@ -56,8 +57,8 @@ process runMACE {
       --variance_limit 0.0015 \
       --interval 5 \
       --stride 10 \
-      --c1_threshold 0.1 \
-      --c2_threshold 2.8
+      --c1_threshold 0.0 \
+      --c2_threshold 3.2
     echo "Done!"
 
     echo "Filtering structures based on MACE-descriptors..."
