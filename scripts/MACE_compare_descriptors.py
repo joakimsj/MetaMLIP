@@ -20,30 +20,41 @@ device = 'cuda'
 # Load structures
 new_structures = read(args.new, ":")
 
-# Load reference structures if file exists
-if os.path.exists(args.reference):
-    reference_structures = read(args.reference, ":")
+# Load reference structures if file exists and is not empty
+reference_structures = []
+if os.path.exists(args.reference) and os.path.getsize(args.reference) > 0:
+    try:
+        reference_structures = read(args.reference, ":")
+        if len(reference_structures) == 0:
+            print(f"Reference dataset '{args.reference}' is empty after reading. Proceeding without reference comparison.")
+    except Exception as e:
+        print(f"Could not read reference dataset '{args.reference}': {e}")
+        print("Proceeding without reference comparison.")
 else:
-    print(f"⚠️ Reference dataset '{args.reference}' not found. Proceeding without reference comparison.")
-    reference_structures = []
+    print(f"Reference dataset '{args.reference}' not found or empty. Proceeding without reference comparison.")
+
+# Compute descriptors for reference set (only if non-empty)
+ref_descriptors = []
+if len(reference_structures) == 0:
+    print("No reference structures loaded — skipping reference descriptor computation.")
+else:
+    print("Computing descriptors for reference dataset...")
+    for idx, atoms in enumerate(tqdm(reference_structures, desc='Reference descriptors')):
+        try:
+            desc = calculator.get_descriptors(atoms, invariants_only=False)
+            ref_descriptors.append(desc)
+        except Exception as e:
+            print(f"Skipping reference structure {idx} due to error: {e}")
+
 
 calculator = MACECalculator(
     model_paths=args.model,
     device=device
 )
 
-# Compute descriptors for reference set (growing dataset)
-print("📦 Computing descriptors for reference dataset...")
-ref_descriptors = []
-for idx, atoms in enumerate(tqdm(reference_structures, desc="Reference descriptors")):
-    try:
-        desc = calculator.get_descriptors(atoms, invariants_only=False)
-        ref_descriptors.append(desc)
-    except Exception as e:
-        print(f"⚠️ Skipping reference structure {idx} due to error: {e}")
 
 # Now process new structures
-print("🔍 Filtering new structures against reference and each other...")
+print("Filtering new structures against reference and each other...")
 filtered_structures = []
 filtered_descriptors = []
 
@@ -57,7 +68,7 @@ for i, atoms in enumerate(tqdm(new_structures, desc="Filtering new structures"))
     try:
         desc = calculator.get_descriptors(atoms, invariants_only=False)
     except Exception as e:
-        print(f"⚠️ Skipping structure {i} due to descriptor error: {e}")
+        print(f"Skipping structure {i} due to descriptor error: {e}")
         continue
 
     is_similar = False
@@ -98,6 +109,6 @@ if len(filtered_descriptors) > 1:
 # Save output
 if filtered_structures:
     write(args.output, filtered_structures, format='extxyz')
-    print(f"✅ Saved {len(filtered_structures)} filtered new structures to {args.output}")
+    print(f"Saved {len(filtered_structures)} filtered new structures to {args.output}")
 else:
-    print("❌ No new unique structures found.")
+    print(" No new unique structures found.")
