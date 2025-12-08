@@ -66,6 +66,7 @@ process runMACE {
             --c2_threshold 3.2
 
         echo "Running descriptor filter..."
+        set +e
         python ${descriptorFilter} \
             --new frames_for_DFT_eval.xyz \
             --reference ${growingDataset} \
@@ -73,7 +74,8 @@ process runMACE {
             --max_structures 100
 
         status=\$?
-
+        set -e 
+        
         # ----------------------------------------
         #  Exit code interpretation:
         #    0  -> Enough structures collected
@@ -361,6 +363,64 @@ process reTrainMACE_naive {
       --r_max=6.0 \
       --foundation_filter_elements=True \
       --filter_type_pt="combinations" \
+      --forces_weight=10 \
+      --energy_weight=1 \
+      --stress_weight=0 \
+      --max_num_epochs=50 \
+      --restart_latest \
+      --device=cuda \
+      --swa \
+      --swa_energy_weight=10.0 \
+      --swa_forces_weight=100 \
+      --swa_stress_weight=0 \
+      --seed=${seed}
+    """
+}
+
+process reTrainMACE_recursive {
+  label 'gpu_mace_train'
+
+  input:
+    path cp2k_dataset
+    each foundation_model
+    path existing_dataset
+    val seed
+    val run_label
+    
+  output:
+    path "*.model", emit: trained_models
+    path "results"
+    path "logs"
+    path "checkpoints"
+
+  publishDir "results/reTrainMACE_recursive/${run_label}/${foundation_model.baseName}", mode: 'copy'
+
+  script:
+    """
+    set -euo pipefail
+
+    export OMP_NUM_THREADS=32
+    export MPICH_GPU_SUPPORT_ENABLED=1
+    export PATH="/project/project_462000838/container_wrapper/mace_env_cueq/bin:\$PATH"
+
+    echo "Running MACE training for foundation model: ${foundation_model.getName()} with seed ${seed}"
+
+    mace_run_train \
+      --name="${foundation_model.baseName}_${run_label}" \
+      --train_file="${cp2k_dataset}" \
+      --atomic_numbers="[1, 6, 7, 8, 14]" \
+      --E0s='{1:-13.55946263, 6:-157.53735191, 7:-265.91593046, 8:-431.59585675, 14:-102.46189747}' \
+      --foundation_model="${foundation_model}" \
+      --pt_train_file="${existing_dataset}" \
+      --num_samples_pt=50 \
+      --multiheads_finetuning=True \
+      --energy_key="REF_energy" \
+      --forces_key="REF_forces" \
+      --hidden_irreps="128x0e + 128x1o" \
+      --r_max=6.0 \
+      --foundation_filter_elements=True \
+      --filter_type_pt="combinations" \
+      --subselect_pt fps \
       --forces_weight=10 \
       --energy_weight=1 \
       --stress_weight=0 \
