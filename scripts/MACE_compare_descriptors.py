@@ -52,6 +52,19 @@ calculator = MACECalculator(
     device=device
 )
 
+# Check the total number of structures (ensuring enough for finetune)
+
+num_new = len(new_structures)
+num_ref = len(reference_structures)
+total_structures = num_new + num_ref
+
+print(f"Total structures available (reference + new) = {total_structures}")
+
+# If we have fewer than 20 total structures, request another MTD sampling round
+if total_structures < 20:
+    print("Fewer than 20 total structures. Requesting more MTD sampling...")
+    exit(10)  # <--- return a non-zero exit code to trigger re-run
+
 
 # Now process new structures
 print("Filtering new structures against reference and each other...")
