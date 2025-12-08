@@ -12,6 +12,105 @@ process runMACE {
     val run_label
 
   publishDir "results/runMACE/${run_label}", mode: 'copy'
+
+  output:
+    path "frames_for_DFT_eval_filtered.xyz", emit: mace_frames
+    path "*.xyz"
+    path "*.png"
+    path "COLVAR"
+    path "HILLS"
+
+  script:
+    def model_paths_string = model_files.join(' ')
+    """
+    set -euo pipefail
+
+    export OMP_NUM_THREADS=32
+    export MPICH_GPU_SUPPORT_ENABLED=1
+    export PATH="/project/project_462000838/container_wrapper/mace_env_cueq/bin:\$PATH"
+
+    echo "GPU is available/Torch version:"
+    python3 -c 'import torch; print(torch.cuda.is_available()); print(torch.__version__)'
+
+    echo "MACE Version:"
+    python3 -c "import mace; print(mace.__version__)"
+
+    echo "Model files: ${model_paths_string}"
+
+    #############################################
+    # ADAPTIVE SAMPLING LOOP: REPEAT UNTIL ≥ 20
+    #############################################
+
+    while true; do
+
+        echo "Cleaning previous MTD output..."
+        rm -f MACE_MTD_committee_system.xyz frames_for_DFT_eval.xyz
+
+        echo "Running MTD..."
+        python ${propagatorMTD} \
+            --input_file ${initialFrame} \
+            --model_paths ${model_paths_string} \
+            --timestep 1.0 \
+            --temperature 400 \
+            --pace 400 \
+            --height 2.0 \
+            --z_threshold 2.6 \
+            --sigma1 0.1 \
+            --sigma2 0.2 \
+            --biasfactor 5 \
+            --nsteps 5000 \
+            --variance_limit 0.0015 \
+            --interval 5 \
+            --stride 10 \
+            --c1_threshold 0.0 \
+            --c2_threshold 3.2
+
+        echo "Running descriptor filter..."
+        python ${descriptorFilter} \
+            --new frames_for_DFT_eval.xyz \
+            --reference ${growingDataset} \
+            --threshold 5 \
+            --max_structures 100
+
+        status=\$?
+
+        # ----------------------------------------
+        #  Exit code interpretation:
+        #    0  -> Enough structures collected
+        #    10 -> <20 structures -> repeat MTD
+        #  other -> fatal error
+        # ----------------------------------------
+
+        if [[ \$status -eq 10 ]]; then
+            echo "Fewer than 20 total structures — repeating metadynamics..."
+            continue
+        elif [[ \$status -eq 0 ]]; then
+            echo "Enough structures collected — proceeding!"
+            break
+        else
+            echo "Descriptor filter error (exit code \$status). Aborting."
+            exit \$status
+        fi
+
+    done
+
+    echo "Filtering done!"
+    """
+}
+
+
+process runMACE_no_adaptive_sampling {
+  label 'gpu_mace_run'
+
+  input:
+    path propagatorMTD
+    path descriptorFilter 
+    path initialFrame
+    path growingDataset
+    val model_files 
+    val run_label
+
+  publishDir "results/runMACE/${run_label}", mode: 'copy'
   
   output:
     path "frames_for_DFT_eval_filtered.xyz", emit: mace_frames
@@ -48,7 +147,7 @@ process runMACE {
       --timestep 1.0 \
       --temperature 400 \
       --pace 400 \
-      --height 4.0 \
+      --height 2.0 \
       --z_threshold 2.6 \
       --sigma1 0.1 \
       --sigma2 0.2 \
