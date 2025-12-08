@@ -149,7 +149,7 @@ if not frames_with_variance:
 
 # === Output filtered frames ===
 sorted_frames = [atoms for _, atoms in sorted(frames_with_variance, key=lambda x: (x[0] if x[0] is not None else -1), reverse=True)]
-write('frames_for_DFT_eval.xyz', sorted_frames, format='extxyz', write_results=False)
+write('frames_for_DFT_eval.xyz', sorted_frames, format='extxyz', write_results=False, append=True)
 
 plt.tight_layout()
 plt.savefig('mace_mtd_committee_analysis.png', dpi=300)

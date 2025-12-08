@@ -20,6 +20,12 @@ device = 'cuda'
 # Load structures
 new_structures = read(args.new, ":")
 
+# Define the calculator and models
+calculator = MACECalculator(
+    model_paths=args.model,
+    device=device
+)
+
 # Load reference structures if file exists and is not empty
 reference_structures = []
 if os.path.exists(args.reference) and os.path.getsize(args.reference) > 0:
@@ -46,11 +52,6 @@ else:
         except Exception as e:
             print(f"Skipping reference structure {idx} due to error: {e}")
 
-
-calculator = MACECalculator(
-    model_paths=args.model,
-    device=device
-)
 
 # Check the total number of structures (ensuring enough for finetune)
 
@@ -105,6 +106,19 @@ for i, atoms in enumerate(tqdm(new_structures, desc="Filtering new structures"))
     if not is_similar:
         filtered_structures.append(atoms)
         filtered_descriptors.append(desc)
+
+
+# Count total structures including reference to ensure enough for training
+num_new_filtered = len(filtered_structures)
+total_structures_filtered = num_new_filtered + num_ref
+
+print(f"Total structures available, including filtered (reference + new_filtered) = {total_structures_filtered}")
+
+# If we have fewer than 20 total structures, request another MTD sampling round
+if total_structures_filtered < 20:
+    print("Fewer than 20 total structures. Requesting more MTD sampling...")
+    exit(10)  # <--- return a non-zero exit code to trigger re-run
+
 
 # Optional: Save distance heatmap
 if len(filtered_descriptors) > 1:
