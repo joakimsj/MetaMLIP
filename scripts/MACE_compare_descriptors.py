@@ -1,4 +1,5 @@
 from ase.io import read, write
+from collections import Counter
 import numpy as np
 from mace.calculators import MACECalculator
 from tqdm import tqdm
@@ -6,78 +7,107 @@ import argparse
 import matplotlib.pyplot as plt
 import os
 
+# -----------------------
+# Helper: Structure Signature
+# -----------------------
+def structure_signature(atoms):
+    """Return a canonical chemical signature based on atom types."""
+    counts = Counter(atoms.get_chemical_symbols())
+    return tuple(sorted(counts.items()))  # e.g. (('C',7),('H',10),('O',2))
+
+
+# -----------------------
+# Arguments
+# -----------------------
 parser = argparse.ArgumentParser()
-parser.add_argument("--new", default="frames_for_DFT_eval.xyz", help="Path to new candidate structures")
-parser.add_argument("--reference", default="growing_dataset.xyz", help="Path to existing dataset")
-parser.add_argument("--output", default="frames_for_DFT_eval_filtered.xyz", help="Output path for filtered structures")
-parser.add_argument("--threshold", type=float, default=1.0, help="Descriptor distance threshold for similarity")
-parser.add_argument("--model", default="/scratch/project_462000838/active_learning_nextflow/input/MACE_models/mace-mpa-0-medium.model", help="Path to MACE model")
-parser.add_argument("--max_structures", type=int, default=None, help="Maximum number of structures to save for reference calcs")
+parser.add_argument("--new", default="frames_for_DFT_eval.xyz",
+                    help="Path to new candidate structures")
+parser.add_argument("--reference", default="growing_dataset.xyz",
+                    help="Path to existing dataset")
+parser.add_argument("--output", default="frames_for_DFT_eval_filtered.xyz",
+                    help="Filtered output structure file")
+parser.add_argument("--threshold", type=float, default=1.0,
+                    help="Descriptor distance threshold")
+parser.add_argument("--model",
+                    default="/scratch/project_462000838/active_learning_nextflow/input/MACE_models/mace-mpa-0-medium.model",
+                    help="Path to MACE model")
+parser.add_argument("--max_structures", type=int, default=None,
+                    help="Maximum number of structures to keep")
+parser.add_argument("--min_new_structures", type=int, default=20,
+                    help="If fewer than this number of *new* structures are present or pass filtering, "
+                         "exit(10) to request new metadynamics sampling.")
 args = parser.parse_args()
 
-device = 'cuda'
+device = "cuda"
 
-# Load structures
+# -----------------------
+# Load new candidate structures
+# -----------------------
 new_structures = read(args.new, ":")
+print(f"Loaded {len(new_structures)} new structures.")
 
-# Define the calculator and models
+# --- NEW REQUIREMENT: Request new MTD runs if too few new structures ---
+if len(new_structures) < args.min_new_structures:
+    print(f"Only {len(new_structures)} new structures. "
+          f"Need at least {args.min_new_structures}. Requesting more MTD sampling...")
+    exit(10)
+
+# -----------------------
+# Load MACE calculator
+# -----------------------
 calculator = MACECalculator(
     model_paths=args.model,
     device=device
 )
 
-# Load reference structures if file exists and is not empty
+# -----------------------
+# Load reference dataset
+# -----------------------
 reference_structures = []
 if os.path.exists(args.reference) and os.path.getsize(args.reference) > 0:
     try:
         reference_structures = read(args.reference, ":")
-        if len(reference_structures) == 0:
-            print(f"Reference dataset '{args.reference}' is empty after reading. Proceeding without reference comparison.")
+        print(f"Loaded {len(reference_structures)} reference structures.")
     except Exception as e:
-        print(f"Could not read reference dataset '{args.reference}': {e}")
-        print("Proceeding without reference comparison.")
+        print(f"Warning: failed to read reference dataset: {e}")
 else:
-    print(f"Reference dataset '{args.reference}' not found or empty. Proceeding without reference comparison.")
+    print("Reference dataset missing or empty.")
 
-# Compute descriptors for reference set (only if non-empty)
-ref_descriptors = []
-if len(reference_structures) == 0:
-    print("No reference structures loaded — skipping reference descriptor computation.")
-else:
+# -----------------------
+# Precompute reference descriptors by chemical signature
+# -----------------------
+signature_to_ref_desc = {}
+
+if len(reference_structures) > 0:
     print("Computing descriptors for reference dataset...")
-    for idx, atoms in enumerate(tqdm(reference_structures, desc='Reference descriptors')):
+    for atoms in tqdm(reference_structures, desc="Reference descriptors"):
+        sig = structure_signature(atoms)
         try:
             desc = calculator.get_descriptors(atoms, invariants_only=False)
-            ref_descriptors.append(desc)
         except Exception as e:
-            print(f"Skipping reference structure {idx} due to error: {e}")
+            print(f"Skipping reference structure due to descriptor error: {e}")
+            continue
+        signature_to_ref_desc.setdefault(sig, []).append(desc)
 
 
-# Check the total number of structures (ensuring enough for finetune)
+# -----------------------
+# FILTER NEW STRUCTURES
+# -----------------------
+print("Filtering new structures (signature-aware)...")
 
-num_new = len(new_structures)
-num_ref = len(reference_structures)
-total_structures = num_new + num_ref
-
-print(f"Total structures available (reference + new) = {total_structures}")
-
-# If we have fewer than 20 total structures, request another MTD sampling round
-if total_structures < 20:
-    print("Fewer than 20 total structures. Requesting more MTD sampling...")
-    exit(10)  # <--- return a non-zero exit code to trigger re-run
-
-
-# Now process new structures
-print("Filtering new structures against reference and each other...")
 filtered_structures = []
 filtered_descriptors = []
+filtered_signatures = []
 
-distance_matrix = np.zeros((len(new_structures), len(new_structures)))  # Optional for plotting
+distance_matrix = np.zeros((len(new_structures), len(new_structures)))
 
 for i, atoms in enumerate(tqdm(new_structures, desc="Filtering new structures")):
+
     if args.max_structures is not None and len(filtered_structures) >= args.max_structures:
-        print(f"Reached maximum number of {args.max_structures} structures. Stopping filtering.")
+        print(f"Reached maximum {args.max_structures} filtered structures. Stopping.")
         break
+
+    sig = structure_signature(atoms)
 
     try:
         desc = calculator.get_descriptors(atoms, invariants_only=False)
@@ -87,18 +117,23 @@ for i, atoms in enumerate(tqdm(new_structures, desc="Filtering new structures"))
 
     is_similar = False
 
-    # Compare with reference dataset
-    for ref_desc in ref_descriptors:
-        if np.linalg.norm(desc - ref_desc) < args.threshold:
-            is_similar = True
-            break
+    # ---- Compare with reference structures of same signature ----
+    if sig in signature_to_ref_desc:
+        for ref_desc in signature_to_ref_desc[sig]:
+            if np.linalg.norm(desc - ref_desc) < args.threshold:
+                is_similar = True
+                break
 
-    # Compare with already accepted new structures
+    # ---- Compare with previously filtered new structures ----
     if not is_similar:
-        for j, existing_desc in enumerate(filtered_descriptors):
+        for j, (sig_existing, existing_desc) in enumerate(zip(filtered_signatures, filtered_descriptors)):
+            if sig_existing != sig:
+                continue  # skip different compositions
+
             dist = np.linalg.norm(desc - existing_desc)
             distance_matrix[len(filtered_descriptors)][j] = dist
             distance_matrix[j][len(filtered_descriptors)] = dist
+
             if dist < args.threshold:
                 is_similar = True
                 break
@@ -106,21 +141,21 @@ for i, atoms in enumerate(tqdm(new_structures, desc="Filtering new structures"))
     if not is_similar:
         filtered_structures.append(atoms)
         filtered_descriptors.append(desc)
+        filtered_signatures.append(sig)
 
 
-# Count total structures including reference to ensure enough for training
-num_new_filtered = len(filtered_structures)
-total_structures_filtered = num_new_filtered + num_ref
-
-print(f"Total structures available, including filtered (reference + new_filtered) = {total_structures_filtered}")
-
-# If we have fewer than 20 total structures, request another MTD sampling round
-if total_structures_filtered < 20:
-    print("Fewer than 20 total structures. Requesting more MTD sampling...")
-    exit(10)  # <--- return a non-zero exit code to trigger re-run
+# -----------------------
+# REQUIREMENT: Filter count check based on NEW structures only
+# -----------------------
+if len(filtered_structures) < args.min_new_structures:
+    print(f"Only {len(filtered_structures)} filtered new structures "
+          f"(required {args.min_new_structures}). Requesting more MTD sampling...")
+    exit(10)
 
 
-# Optional: Save distance heatmap
+# -----------------------
+# Save heatmap (optional)
+# -----------------------
 if len(filtered_descriptors) > 1:
     n = len(filtered_descriptors)
     cropped = distance_matrix[:n, :n]
@@ -133,9 +168,12 @@ if len(filtered_descriptors) > 1:
     plt.tight_layout()
     plt.savefig('descriptor_heatmap.png', dpi=300)
 
+# -----------------------
 # Save output
+# -----------------------
 if filtered_structures:
     write(args.output, filtered_structures, format='extxyz')
-    print(f"Saved {len(filtered_structures)} filtered new structures to {args.output}")
+    print(f"Saved {len(filtered_structures)} filtered structures to {args.output}")
 else:
-    print(" No new unique structures found.")
+    print("No new unique structures found.")
+
