@@ -44,7 +44,7 @@ process runMACE {
     while true; do
 
         echo "Cleaning previous MTD output..."
-        rm -f MACE_MTD_committee_system.xyz frames_for_DFT_eval.xyz
+        rm -f MACE_MTD_committee_system.xyz # frames_for_DFT_eval.xyz
 
         echo "Running MTD..."
         python ${propagatorMTD} \
@@ -418,12 +418,14 @@ process reTrainMACE_recursive {
       --forces_key="REF_forces" \
       --hidden_irreps="128x0e + 128x1o" \
       --r_max=6.0 \
+      --batch_size=2 \
       --foundation_filter_elements=True \
       --filter_type_pt="combinations" \
       --subselect_pt fps \
       --forces_weight=10 \
       --energy_weight=1 \
       --stress_weight=0 \
+      --compute_stress=False \
       --max_num_epochs=50 \
       --restart_latest \
       --device=cuda \
