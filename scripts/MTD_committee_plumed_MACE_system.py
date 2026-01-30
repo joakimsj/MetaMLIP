@@ -143,16 +143,14 @@ def write_frame():
     atoms_copy.arrays["force_uncertainty"] = force_sigma
     #print(force_sigma)
 
-# Reduce to structure-level diagnostics
+    # Reduce to structure-level diagnostics
     max_force_sigma = np.max(force_sigma)
     mean_force_sigma = np.mean(force_sigma)
-    #top5_force_sigma = np.mean(np.sort(force_sigma)[-5:])
 
     # Store metadata
     atoms_copy.info["energy_variance"] = variance
     atoms_copy.info["max_force_uncertainty"] = max_force_sigma
     atoms_copy.info["mean_force_uncertainty"] = mean_force_sigma
-    #atoms_copy.info["top5_force_uncertainty"] = top5_force_sigma
 
     # === Selection logic ===
     select = False
@@ -161,14 +159,22 @@ def write_frame():
         select = True
 
     # Optional additional force-based trigger
-    #force_threshold = 0.15  # eV/Å (tune this!)
     if max_force_sigma > args.force_variance_limit:
         select = True
 
     if select:
         frames_with_variance.append((max_force_sigma, atoms_copy))
 
+    # === Save uncertainty and CVs in a separate log file ===
+    with open("cv_uncertainty_topo.dat", "a") as f:
+        f.write(f"{t_fs:.4f} {c1:.6f} {c2:.6f} "
+                f"{variance:.6e} {max_force_sigma:.6e} {mean_force_sigma:.6e}\n")
+
 dyn.attach(write_frame, interval=args.interval)
+
+# Add header to uncertainty-CV log file
+with open("cv_uncertainty_topo.dat", "w") as f:
+    f.write("# time_fs c1 c2 energy_var max_force_unc mean_force_unc\n")
 
 # === Run dynamics with clean stopping ===
 try:
