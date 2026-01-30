@@ -31,6 +31,7 @@ parser.add_argument("--biasfactor", type=float, default=5, help="METAD bias fact
 parser.add_argument("--stride", type=int, default=10, help="PLUMED print stride")
 parser.add_argument("--interval", type=int, default=5, help="ASE attach interval")
 parser.add_argument("--variance_limit", type=float, default=0.0015, help="Variance threshold")
+parser.add_argument("--force_variance_limit", type=float, default=0.0200, help="Per-atom force variance threshold")
 parser.add_argument("--c1_threshold", type=float, default=2.0, help="Threshold for CV c1")
 parser.add_argument("--c2_threshold", type=float, default=2.5, help="Threshold for CV c2")
 
@@ -88,6 +89,29 @@ def read_last_colvar(filename="COLVAR"):
         c2 = float(last_line[2])
         return c1, c2
 
+def compute_force_uncertainty(atoms, model_paths):
+    """Return per-atom force std and reduced structure metrics."""
+    forces = []
+
+    for model in model_paths:
+        calc = MACECalculator(
+            model_paths=model,
+            device='cuda',
+            default_dtype='float64'
+        )
+        atoms.calc = calc
+        forces.append(atoms.get_forces())
+
+    forces = np.stack(forces, axis=0)  # (n_models, n_atoms, 3)
+
+    force_std = forces.std(axis=0) # (n_atoms, 3)
+
+    force_sigma = np.linalg.norm(force_std, axis=1)
+    #print("force_sigma shape:", force_sigma.shape)
+    #print("min / max:", force_sigma.min(), force_sigma.max())
+
+    return force_sigma
+
 def write_frame():
     atoms_copy = atoms.copy()
     atoms_copy.calc = mace_committee
@@ -112,9 +136,37 @@ def write_frame():
     variance = atoms_copy.calc.results['energy_var']
     variances.append(variance)
 
+    # === Per-atom force uncertainty ===
+    force_sigma = compute_force_uncertainty(atoms_copy, args.model_paths)
+
+    # Store per-atom property for OVITO
+    atoms_copy.arrays["force_uncertainty"] = force_sigma
+    #print(force_sigma)
+
+# Reduce to structure-level diagnostics
+    max_force_sigma = np.max(force_sigma)
+    mean_force_sigma = np.mean(force_sigma)
+    #top5_force_sigma = np.mean(np.sort(force_sigma)[-5:])
+
+    # Store metadata
+    atoms_copy.info["energy_variance"] = variance
+    atoms_copy.info["max_force_uncertainty"] = max_force_sigma
+    atoms_copy.info["mean_force_uncertainty"] = mean_force_sigma
+    #atoms_copy.info["top5_force_uncertainty"] = top5_force_sigma
+
+    # === Selection logic ===
+    select = False
+
     if variance is not None and variance >= args.variance_limit:
-        atoms_copy.info['variance'] = variance
-        frames_with_variance.append((variance, atoms_copy))
+        select = True
+
+    # Optional additional force-based trigger
+    #force_threshold = 0.15  # eV/Å (tune this!)
+    if max_force_sigma > args.force_variance_limit:
+        select = True
+
+    if select:
+        frames_with_variance.append((max_force_sigma, atoms_copy))
 
 dyn.attach(write_frame, interval=args.interval)
 
@@ -144,8 +196,23 @@ ax[2].legend(loc='upper left')
 if not frames_with_variance:
     last_frame = atoms.copy()
     last_frame.calc = mace_committee
-    last_frame.info['variance'] = None  # no variance exceeded
-    frames_with_variance.append((None, last_frame))
+
+    # --- compute uncertainties ---
+    force_sigma = compute_force_uncertainty(last_frame, args.model_paths)
+
+    variance = last_frame.calc.results.get("energy_var", None)
+
+    # --- store per-atom ---
+    last_frame.arrays["force_uncertainty"] = force_sigma
+
+    # --- store per-structure ---
+    last_frame.info["energy_variance"] = variance
+    last_frame.info["max_force_uncertainty"] = float(np.max(force_sigma))
+    last_frame.info["mean_force_uncertainty"] = float(np.mean(force_sigma))
+
+    frames_with_variance.append(
+        (last_frame.info["max_force_uncertainty"], last_frame)
+    )
 
 # === Output filtered frames ===
 sorted_frames = [atoms for _, atoms in sorted(frames_with_variance, key=lambda x: (x[0] if x[0] is not None else -1), reverse=True)]
