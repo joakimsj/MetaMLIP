@@ -1,4 +1,5 @@
 import argparse
+from ase.neighborlist import NeighborList
 from ase.calculators.plumed import Plumed
 from ase import units
 from ase.io import read, write
@@ -89,28 +90,39 @@ def read_last_colvar(filename="COLVAR"):
         c2 = float(last_line[2])
         return c1, c2
 
-def compute_force_uncertainty(atoms, model_paths):
-    """Return per-atom force std and reduced structure metrics."""
-    forces = []
+def compute_force_uncertainty(atoms, mace_committee, cutoff=5.0):
+    """
+    Returns:
+        force_sigma : (n_atoms,)   magnitude-based atomic uncertainty
+        s_local     : (n_atoms,)   locally averaged uncertainty
+    """
 
-    for model in model_paths:
-        calc = MACECalculator(
-            model_paths=model,
-            device='cuda',
-            default_dtype='float64'
-        )
-        atoms.calc = calc
-        forces.append(atoms.get_forces())
+    atoms.calc = mace_committee
+    _ = atoms.get_forces()  # ensure results are populated
 
-    forces = np.stack(forces, axis=0)  # (n_models, n_atoms, 3)
+    # --- per-model forces ---
+    forces_comm = atoms.calc.results["forces_comm"]
+    # shape: (n_models, n_atoms, 3)
 
-    force_std = forces.std(axis=0) # (n_atoms, 3)
+    # --- per-atom, per-component std ---
+    force_std = forces_comm.std(axis=0)     # (n_atoms, 3)
 
-    force_sigma = np.linalg.norm(force_std, axis=1)
-    #print("force_sigma shape:", force_sigma.shape)
-    #print("min / max:", force_sigma.min(), force_sigma.max())
+    # --- atomic uncertainty measures ---
+    s_atom = force_std.mean(axis=1)          # component-averaged
+    force_sigma = np.linalg.norm(force_std, axis=1)  # magnitude-based
 
-    return force_sigma
+    # --- neighbor list for local aggregation ---
+    cutoffs = [cutoff/2] * len(atoms)
+    nl = NeighborList(cutoffs, self_interaction=True, bothways=True)
+    nl.update(atoms)
+
+    s_local = np.zeros(len(atoms))
+    for i in range(len(atoms)):
+        indices, _ = nl.get_neighbors(i)
+        s_local[i] = s_atom[indices].mean()
+
+    return force_sigma, s_local
+
 
 def write_frame():
     atoms_copy = atoms.copy()
@@ -137,13 +149,18 @@ def write_frame():
     variances.append(variance)
 
     # === Per-atom force uncertainty ===
-    force_sigma = compute_force_uncertainty(atoms_copy, args.model_paths)
+    force_sigma, s_local = compute_force_uncertainty(atoms_copy, mace_committee)
 
     # Store per-atom property for OVITO
-    atoms_copy.arrays["force_uncertainty"] = force_sigma
+    atoms_copy.arrays["per_atom_force_uncertainty"] = force_sigma
+    atoms_copy.arrays["local_force_uncertainty"] = s_local
     #print(force_sigma)
 
     # Reduce to structure-level diagnostics
+    local_mean = s_local.mean()
+    #local_p95 = np.percentile(s_local, 95)
+    local_max = s_local.max()
+
     max_force_sigma = np.max(force_sigma)
     mean_force_sigma = np.mean(force_sigma)
 
@@ -159,7 +176,10 @@ def write_frame():
         select = True
 
     # Optional additional force-based trigger
-    if max_force_sigma > args.force_variance_limit:
+    #if max_force_sigma > args.force_variance_limit:
+    #    select = True
+
+    if local_max > args.force_variance_limit:
         select = True
 
     if select:
@@ -168,13 +188,13 @@ def write_frame():
     # === Save uncertainty and CVs in a separate log file ===
     with open("cv_uncertainty_topo.dat", "a") as f:
         f.write(f"{t_fs:.4f} {c1:.6f} {c2:.6f} "
-                f"{variance:.6e} {max_force_sigma:.6e} {mean_force_sigma:.6e}\n")
+                f"{variance:.6e} {max_force_sigma:.6e} {mean_force_sigma:.6e} {local_max:.6e}\n")
 
 dyn.attach(write_frame, interval=args.interval)
 
 # Add header to uncertainty-CV log file
 with open("cv_uncertainty_topo.dat", "w") as f:
-    f.write("# time_fs c1 c2 energy_var max_force_unc mean_force_unc\n")
+    f.write("# time_fs c1 c2 energy_var max_force_unc mean_force_unc local_max_force_unc\n")
 
 # === Run dynamics with clean stopping ===
 try:
@@ -204,12 +224,13 @@ if not frames_with_variance:
     last_frame.calc = mace_committee
 
     # --- compute uncertainties ---
-    force_sigma = compute_force_uncertainty(last_frame, args.model_paths)
+    force_sigma, s_local = compute_force_uncertainty(last_frame, mace_committee)
 
     variance = last_frame.calc.results.get("energy_var", None)
 
     # --- store per-atom ---
-    last_frame.arrays["force_uncertainty"] = force_sigma
+    last_frame.arrays["per_atom_force_uncertainty"] = force_sigma
+    last_frame.arrays["local_force_uncertainty"] = s_local
 
     # --- store per-structure ---
     last_frame.info["energy_variance"] = variance
