@@ -2,6 +2,8 @@
 """
 generate_nextflow_workflow.py
 
+A script to generate the nextflow input files for the active learning loop where the original model is finetuned with the growing dataset 
+
 Usage:
     python generate_nextflow_workflow.py <num_iterations> > workflow_generated.nf
 """
