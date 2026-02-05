@@ -2,6 +2,9 @@
 """
 generate_nextflow_workflow.py
 
+A script to generate the nextflow input files for the active learning loop where the model trained at each iteration is finetuned on data acquired in each iteration, 
+treating the growing dataset as the "foundational model" and the new data as the finetuning set, hence the term recursive.  
+
 Usage:
     python generate_nextflow_workflow.py <num_iterations> > workflow_generated.nf
 """
