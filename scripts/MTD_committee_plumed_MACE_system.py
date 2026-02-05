@@ -31,7 +31,7 @@ parser.add_argument("--sigma2", type=float, default=0.2, help="METAD sigma2")
 parser.add_argument("--biasfactor", type=float, default=5, help="METAD bias factor")
 parser.add_argument("--stride", type=int, default=10, help="PLUMED print stride")
 parser.add_argument("--interval", type=int, default=5, help="ASE attach interval")
-parser.add_argument("--variance_limit", type=float, default=0.0015, help="Variance threshold")
+parser.add_argument("--variance_limit", type=float, default=0.500, help="Variance threshold")
 parser.add_argument("--force_variance_limit", type=float, default=0.0200, help="Per-atom force variance threshold")
 parser.add_argument("--c1_threshold", type=float, default=2.0, help="Threshold for CV c1")
 parser.add_argument("--c2_threshold", type=float, default=2.5, help="Threshold for CV c2")
@@ -160,7 +160,6 @@ def write_frame():
     local_mean = s_local.mean()
     #local_p95 = np.percentile(s_local, 95)
     local_max = s_local.max()
-
     max_force_sigma = np.max(force_sigma)
     mean_force_sigma = np.mean(force_sigma)
 
@@ -168,6 +167,8 @@ def write_frame():
     atoms_copy.info["energy_variance"] = variance
     atoms_copy.info["max_force_uncertainty"] = max_force_sigma
     atoms_copy.info["mean_force_uncertainty"] = mean_force_sigma
+    atoms_copy.info["local_max_force_uncertainty"] = float(local_max)
+    atoms_copy.info["local_mean_force_uncertainty"] = float(local_mean)
 
     # === Selection logic ===
     select = False
@@ -175,15 +176,11 @@ def write_frame():
     if variance is not None and variance >= args.variance_limit:
         select = True
 
-    # Optional additional force-based trigger
-    #if max_force_sigma > args.force_variance_limit:
-    #    select = True
-
-    if local_max > args.force_variance_limit:
+    if local_max >= args.force_variance_limit:
         select = True
 
     if select:
-        frames_with_variance.append((max_force_sigma, atoms_copy))
+        frames_with_variance.append((local_max, atoms_copy))
 
     # === Save uncertainty and CVs in a separate log file ===
     with open("cv_uncertainty_topo.dat", "a") as f:
@@ -237,8 +234,11 @@ if not frames_with_variance:
     last_frame.info["max_force_uncertainty"] = float(np.max(force_sigma))
     last_frame.info["mean_force_uncertainty"] = float(np.mean(force_sigma))
 
+    local_max = float(np.max(s_local))
+    last_frame.info["local_max_force_uncertainty"] = local_max
+
     frames_with_variance.append(
-        (last_frame.info["max_force_uncertainty"], last_frame)
+        (local_max, last_frame)
     )
 
 # === Output filtered frames ===
