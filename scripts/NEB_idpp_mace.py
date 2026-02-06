@@ -10,7 +10,7 @@ from sys import argv
 # Read initial and final geometries
 initial = read(argv[1])
 final = read(argv[2])
-z_threshold = 2.6
+z_threshold = 2.0
 initial_name = os.path.splitext(argv[1])[0]
 final_name = os.path.splitext(argv[2])[0]
 
@@ -63,7 +63,7 @@ images.append(final)
 fixed_indices = [i for i, atom in enumerate(image) if atom.position[2] < z_threshold]
 fix_constraint = FixAtoms(indices=fixed_indices)
 for image in images:
-    image.set_constraint(constraint)
+    image.set_constraint(fix_constraint)
 
 # Run IDPP interpolation
 neb = NEB(images)
