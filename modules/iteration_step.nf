@@ -44,8 +44,11 @@ workflow ITERATION_STEP {
         updated_dataset_ch = update_out.updated_dataset
         //updated_dataset_ch = update_out.persistent_dataset
         
-        // === Retraining step (3 jobs via each seed) ===
-        seed_ch = Channel.of(123, 456, 789)
+        // === Retraining step (3 jobs via each seed, randomSample() can be provided with a second seed parameter for the random seed generator) ===
+        //seed_ch = Channel.of(123, 456, 789) (for fixed seeds) 
+        seed_ch = Channel.of( 1..1000000 )
+            .randomSample( 3 )
+            .view()
         foundation_model = file('input/MACE_models/mace-mpa-0-medium.model')
 
         retrain_out = reTrainMACE(
