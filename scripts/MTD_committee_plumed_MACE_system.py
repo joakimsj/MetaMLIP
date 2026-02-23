@@ -24,14 +24,16 @@ parser.add_argument("--timestep", type=float, default=1.0, help="MD timestep in 
 parser.add_argument("--z_threshold", type=float, default=2.0, help="z-threshold in Å for fixing slab atoms")
 parser.add_argument("--nsteps", type=int, default=2500, help="Number of MD steps")
 parser.add_argument("--temperature", type=float, default=400, help="Temperature in Kelvin")
+parser.add_argument("--kappa", type=float, default=150.0, help="LOWER WALLS force constant")
+parser.add_argument("--wall_pos", type=float, default=0.15, help="LOWER WALLS colvar-based position for wall")
 parser.add_argument("--pace", type=int, default=400, help="METAD PACE")
 parser.add_argument("--height", type=float, default=4.0, help="METAD height")
 parser.add_argument("--sigma1", type=float, default=0.1, help="METAD sigma1")
 parser.add_argument("--sigma2", type=float, default=0.2, help="METAD sigma2")
 parser.add_argument("--biasfactor", type=float, default=5, help="METAD bias factor")
 parser.add_argument("--stride", type=int, default=10, help="PLUMED print stride")
-parser.add_argument("--interval", type=int, default=5, help="ASE attach interval")
-parser.add_argument("--variance_limit", type=float, default=0.500, help="Variance threshold")
+parser.add_argument("--interval", type=int, default=10, help="ASE attach interval")
+parser.add_argument("--variance_limit", type=float, default=0.0015, help="Variance threshold")
 parser.add_argument("--force_variance_limit", type=float, default=0.0200, help="Per-atom force variance threshold")
 parser.add_argument("--c1_threshold", type=float, default=2.0, help="Threshold for CV c1")
 parser.add_argument("--c2_threshold", type=float, default=2.5, help="Threshold for CV c2")
@@ -50,13 +52,14 @@ plumed_input = [
     f"UNITS LENGTH=A TIME={1/(1000*units.fs)} ENERGY={units.mol/units.kJ}",
     "c1: COORDINATION GROUPA=217 GROUPB=219-221 R_0=2.2",
     "c2: COORDINATION GROUPA=217 GROUPB=39,56,57,58,59,60,61,62,63,64,79,80,81,85,87,89,90,92 R_0=2.0",
-    "LOWER_WALLS ARG=c2 AT=0.3 KAPPA=100 LABEL=d1",
+    f"LOWER_WALLS ARG=c2 AT={args.wall_pos} KAPPA={args.kappa} LABEL=d1",
     f"metad: METAD ARG=c1,c2 HEIGHT={args.height} PACE={args.pace} " +
     f"SIGMA={args.sigma1},{args.sigma2} GRID_MIN=0.0,0.0 GRID_MAX=5.0,5.0 " +
     f"BIASFACTOR={args.biasfactor} TEMP={args.temperature} FILE=HILLS",
     f"PRINT ARG=c1,c2,metad.bias STRIDE={args.stride} FILE=COLVAR",
     f"FLUSH STRIDE=1"
 ]
+
 
 # === Setup calc ===
 atoms.calc = Plumed(calc=mace_committee, input=plumed_input, timestep=args.timestep, atoms=atoms, kT=kT)
