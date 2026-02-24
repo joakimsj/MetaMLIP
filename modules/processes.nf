@@ -51,15 +51,16 @@ process runMACE {
             --input_file ${initialFrame} \
             --model_paths ${model_paths_string} \
             --timestep 1.0 \
-            --temperature 400 \
+            --temperature 600 \
             --pace 400 \
-            --height 2.0 \
+            --height 4.0 \
             --z_threshold 2.6 \
             --sigma1 0.1 \
             --sigma2 0.2 \
             --biasfactor 5 \
             --nsteps 5000 \
-            --variance_limit 0.0015 \
+            --variance_limit 0.5 \
+            --force_variance_limit 0.004 \
             --interval 5 \
             --stride 10 \
             --c1_threshold 0.0 \
@@ -71,7 +72,7 @@ process runMACE {
             --new frames_for_DFT_eval.xyz \
             --reference ${growingDataset} \
             --threshold 5 \
-            --max_structures 100
+            --max_structures 50
 
         status=\$?
         set -e 
@@ -162,6 +163,241 @@ process runMACE_no_adaptive_sampling {
       --c2_threshold 3.2
     echo "Done!"
 
+    echo "Filtering structures based on MACE-descriptors..."
+    python ${descriptorFilter} --new frames_for_DFT_eval.xyz --reference ${growingDataset} --threshold 5 --max_structures 100
+    echo "Filtering done!"
+    """
+}
+
+process runMACE_MTD {
+  label 'gpu_mace_run'
+
+  input:
+    path propagatorMTD
+    path descriptorFilter 
+    path initialFrame
+    path growingDataset
+    val model_files 
+    val run_label
+
+  publishDir "results/runMACE_MTD/${run_label}", mode: 'copy'
+  
+  output:
+    path "MACE_MTD_committee_system.xyz", emit: mtd_trajectory
+    path "*.xyz"
+    path "*.png"
+    path "COLVAR", emit: colvar_file
+    path "HILLS"
+
+  script:
+    def model_paths_string = model_files.join(' ')
+    """
+    set -euo pipefail
+
+    export OMP_NUM_THREADS=32
+    echo \$OMP_NUM_THREADS
+
+    export MPICH_GPU_SUPPORT_ENABLED=1
+
+    ## New MACE env ##
+    export PATH="/project/project_462001097/container_wrapper/mace_env_cueq/bin:\$PATH"
+
+    echo "GPU is available/Torch version:"
+    python3 -c 'import torch; print(torch.cuda.is_available()); print(torch.__version__)'
+
+    echo "MACE Version:"
+    python3 -c "import mace; print(mace.__version__)"
+
+    rm -f MACE_MTD_committee_system.xyz frames_for_DFT_eval.xyz
+    
+    echo "Model files: ${model_paths_string}"
+    
+    echo "Running MTD..."
+    python ${propagatorMTD} --input_file ${initialFrame} --model_paths ${model_paths_string} \
+      --timestep 1.0 \
+      --temperature 400 \
+      --pace 400 \
+      --height 4.0 \
+      --z_threshold 7.5 \
+      --sigma1 0.1 \
+      --sigma2 0.2 \
+      --biasfactor 5 \
+      --nsteps 10000 \
+      --variance_limit 0.0015 \
+      --interval 1 \
+      --stride 10 \
+      --c1_threshold 0.0 \
+      --c2_threshold 3.8
+    echo "Done!"
+    """
+}
+
+process runMACE_NEB_sequential {
+  label 'gpu_mace_run'
+
+  input:
+    path committeeNEB
+    path descriptorFilter 
+    path reaction_window
+    path growingDataset
+    val model_files 
+    val run_label
+
+  publishDir "results/runMACE_NEB/${run_label}", mode: 'copy'
+  
+  output:
+    path "*_neb_dft_harvest.xyz", emit: neb_uncertain_frames
+    path "*.xyz"
+
+  script:
+    def model_paths_string = model_files.join(' ')
+    """
+    set -euo pipefail
+
+    export OMP_NUM_THREADS=32
+    echo \$OMP_NUM_THREADS
+
+    export MPICH_GPU_SUPPORT_ENABLED=1
+
+    ## New MACE env ##
+    export PATH="/project/project_462000838/container_wrapper/mace_env_cueq/bin:\$PATH"
+
+    echo "GPU is available/Torch version:"
+    python3 -c 'import torch; print(torch.cuda.is_available()); print(torch.__version__)'
+
+    echo "MACE Version:"
+    python3 -c "import mace; print(mace.__version__)"
+
+    echo "Model files: ${model_paths_string}"
+    
+    for window in reaction_*_window.extxyz; do
+        echo "Running NEB on \$window"
+
+        python ${committeeNEB} \
+        --initial_file "\$window" \
+        --model_paths ${model_paths_string} \
+        --z_threshold 7.5 \
+        --n_images 8 \
+        --n_images_eval 10
+
+    done
+    
+    echo "Done!"
+
+    """
+}
+
+process runMACE_NEB {
+  label 'gpu_mace_run'
+  maxForks 4
+
+  input:
+    path committeeNEB
+    path reaction_window
+    path growingDataset
+    val model_files 
+    val run_label
+
+  publishDir "results/runMACE_NEB/${run_label}", mode: 'copy'
+  
+  output:
+    path "*_neb_dft_harvest.xyz", emit: neb_uncertain_frames
+    path "*.xyz"
+
+  script:
+    def model_paths_string = model_files.join(' ')
+    """
+    set -u
+
+    export OMP_NUM_THREADS=32
+    export MPICH_GPU_SUPPORT_ENABLED=1
+    export PATH="/project/project_462001097/container_wrapper/mace_env_cueq/bin:\$PATH"
+
+    rid=\$(basename "${reaction_window}" .extxyz)
+    mkdir -p "neb_\$rid"
+    cd "neb_\$rid"
+
+    echo "Running NEB on ${reaction_window}"
+
+    python ${committeeNEB} \
+      --initial_file "${reaction_window}" \
+      --model_paths ${model_paths_string} \
+      --z_threshold 7.5 \
+      --n_images 8 \
+      --n_images_eval 10 || echo "NEB failed for ${reaction_window}"
+
+    echo "Done: ${reaction_window}"
+    """
+}
+
+process extractReact {
+  label 'local'
+  
+  input:
+    path NEB_extractor
+    path mtd_trajectory
+    path colvar_file
+    val run_label
+    
+  output:
+    path "reaction_*_window.extxyz", emit: reaction_windows
+    path "reaction_indices.txt"
+    path "reaction_bonds.log"
+
+  publishDir "results/extractReact/${run_label}", mode: 'copy'
+
+  script:
+    """
+    echo "Extracting reactions..."
+
+    python ${NEB_extractor} --input_file ${mtd_trajectory} --colvar ${colvar_file} \
+      --output_file "reaction_frames.extxyz" \
+      --indices-output "reaction_indices.txt" \
+      --delta 0.3 \
+      --cv 2 \
+      --padding 200 \
+      --persist 1 \
+      --pre-frames 100 \
+      --post-frames 100 \
+      --form-scale 1.10 \
+      --break-scale 1.7 \
+      --min_spacing 5 \
+      --zmin 10.0 \
+      --max-reactions 10 \
+      --debug True
+    echo "Done!"
+    """
+}
+
+process collectNEBs {
+  label 'gpu_mace_run'
+  maxForks 1
+  
+  input:
+    path descriptorFilter
+    path neb_uncertain_frames
+    path growingDataset
+    val run_label
+    
+  output:
+    path "frames_for_DFT_eval_filtered.xyz", emit: mace_frames
+    path "growing_dataset.xyz", emit: updated_dataset
+    path "growing_dataset_*.xyz", emit: backup_dataset
+
+  publishDir "results/collectNEBs/${run_label}", mode: 'copy'
+
+  script:
+    """
+    ## New MACE env ##
+    export PATH="/project/project_462001097/container_wrapper/mace_env_cueq/bin:\$PATH"
+    
+    echo "NEB windows received:"
+    ls -lh ${neb_uncertain_frames}
+    
+    echo "Collecting NEB data for filtering..."
+    cat ${neb_uncertain_frames} >> frames_for_DFT_eval.xyz
+    echo "Done collecting"
+    
     echo "Filtering structures based on MACE-descriptors..."
     python ${descriptorFilter} --new frames_for_DFT_eval.xyz --reference ${growingDataset} --threshold 5 --max_structures 100
     echo "Filtering done!"
@@ -281,7 +517,8 @@ process reTrainMACE {
 
     export OMP_NUM_THREADS=32
     export MPICH_GPU_SUPPORT_ENABLED=1
-    export PATH="/project/project_462000838/container_wrapper/mace_env_cueq/bin:\$PATH"
+    ## New MACE env ##
+    export PATH="/project/project_462001097/container_wrapper/mace_env_cueq/bin:\$PATH"
 
     echo "Running MACE training with seed $seed"
 
