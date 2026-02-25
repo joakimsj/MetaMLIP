@@ -1,0 +1,5 @@
+pip install --upgrade pip
+pip3 install torch==2.6.0 --index-url https://download.pytorch.org/whl/rocm6.1
+pip3 install mace-torch
+pip3 install cuequivariance cuequivariance-torch cuequivariance-ops-torch-cu12
+conda install -c conda-forge py-plumed
