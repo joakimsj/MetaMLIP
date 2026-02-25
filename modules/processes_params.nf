@@ -28,7 +28,7 @@ process runMACE {
     export OMP_NUM_THREADS=32
     export MPICH_GPU_SUPPORT_ENABLED=1
     ## Environment path ##
-    export PATH="${params.env_path}bin:\$PATH"
+    export PATH="${params.env_path.mace}/bin:\$PATH"
 
     echo "GPU is available/Torch version:"
     python3 -c 'import torch; print(torch.cuda.is_available()); print(torch.__version__)'
@@ -137,7 +137,7 @@ process runMACE_no_adaptive_sampling {
     export MPICH_GPU_SUPPORT_ENABLED=1
 
     ## Environment path ##
-    export PATH="${params.env_path}bin:\$PATH"
+    export PATH="${params.env_path.mace}/bin:\$PATH"
 
     echo "GPU is available/Torch version:"
     python3 -c 'import torch; print(torch.cuda.is_available()); print(torch.__version__)'
@@ -213,7 +213,7 @@ process runMACE_MTD {
     export MPICH_GPU_SUPPORT_ENABLED=1
 
     ## Environment path ##
-    export PATH="${params.env_path}bin:\$PATH"
+    export PATH="${params.env_path.mace}/bin:\$PATH"
 
     echo "GPU is available/Torch version:"
     python3 -c 'import torch; print(torch.cuda.is_available()); print(torch.__version__)'
@@ -278,7 +278,7 @@ process runMACE_NEB_sequential {
     export MPICH_GPU_SUPPORT_ENABLED=1
 
     ## Environment path ##
-    export PATH="${params.env_path}bin:\$PATH"
+    export PATH="${params.env_path.mace}/bin:\$PATH"
 
     echo "GPU is available/Torch version:"
     python3 -c 'import torch; print(torch.cuda.is_available()); print(torch.__version__)'
@@ -307,11 +307,11 @@ process runMACE_NEB_sequential {
 process runMACE_NEB {
   label 'gpu_mace_run'
   maxForks 4
-
+  
   input:
     path committeeNEB
-    path reaction_window
-    path growingDataset
+    each reaction_window
+    path growingDataset 
     val model_files 
     val run_label
 
@@ -330,11 +330,11 @@ process runMACE_NEB {
     export MPICH_GPU_SUPPORT_ENABLED=1
     
     ## Environment path ##
-    export PATH="${params.env_path}bin:\$PATH"
+    export PATH="${params.env_path.mace}/bin:\$PATH"
 
-    rid=\$(basename "${reaction_window}" .extxyz)
-    mkdir -p "neb_\$rid"
-    cd "neb_\$rid"
+    #rid=\$(basename "${reaction_window}" .extxyz)
+    #mkdir -p "neb_\$rid"
+    #cd "neb_\$rid"
 
     echo "Running NEB on ${reaction_window}"
 
@@ -370,11 +370,11 @@ process extractReact {
     export MPICH_GPU_SUPPORT_ENABLED=1
 
     ## Environment path ##
-    export PATH="${params.env_path}bin:\$PATH"   
+    export PATH="${params.env_path.mace}/bin:\$PATH"   
     
     echo "Extracting reactions..."
 
-    python ${NEB_extractor}
+    python ${NEB_extractor} \
         --input_file ${mtd_trajectory} \
         --colvar ${colvar_file} \
         --output "reaction_frames.extxyz" \
@@ -416,7 +416,7 @@ process collectNEBs {
   script:
     """
     ## Environment path ##
-    export PATH="${params.env_path}bin:\$PATH"
+    export PATH="${params.env_path.mace}/bin:\$PATH"
     
     echo "NEB windows received:"
     ls -lh ${neb_uncertain_frames}
@@ -466,7 +466,7 @@ process calcREF {
     ulimit -s unlimited
     
     ## Environment path ##
-    export PATH="${params.env_path}bin:\$PATH"
+    export PATH="${params.env_path.mace}/bin:\$PATH"
 
     echo "Loading in CP2K modules.."
     module use /appl/local/csc/modulefiles
@@ -553,7 +553,7 @@ process reTrainMACE {
     # Use centralized parameter values
     export OMP_NUM_THREADS=${params.retrain.omp_threads}
     export MPICH_GPU_SUPPORT_ENABLED=1
-    export PATH="${params.env_path}/bin:\$PATH"
+    export PATH="${params.env_path.mace}/bin:\$PATH"
 
     echo "Running MACE training with seed $seed"
 
