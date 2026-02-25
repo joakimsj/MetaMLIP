@@ -1,0 +1,78 @@
+{
+  "system": "TDMAS_SiO2",
+
+  "run_name": "tdmas_sio2_debug",
+
+  "env_path": {
+    "mace": "/project/project_462001097/container_wrapper/mace_env_cueq"
+  },
+
+  "omp_threads_gpu": 4,
+  "omp_threads_cpu": 64,
+
+
+  "input": {
+    "initial_structure": "input/TDMAS_SiO2_start.traj",
+    "foundation_model": "input/MACE_models/mace-mpa-0-medium.model",
+    "initial_dataset": "growing_dataset/growing_retrain_dataset.xyz"
+  },
+
+  "mtd": {
+    "timestep": 1.0,
+    "temperature": 400,
+    "kappa": 150,
+    "wall_pos": 0.15,
+    "pace": 400,
+    "height": 4.0,
+    "z_threshold": 7.5,
+    "sigma1": 0.1,
+    "sigma2": 0.2,
+    "biasfactor": 5,
+    "nsteps": 5000,
+    "variance_limit": 0.0015,
+    "force_variance_limit": 0.01,
+    "interval": 1,
+    "stride": 10,
+    "c1_threshold": 0.0,
+    "c2_threshold": 3.8
+  },
+
+  "extract": {
+    "delta": 0.3,
+    "cv": 2,
+    "padding": 200,
+    "persist": 1,
+    "pre_frames": 100,
+    "post_frames": 100,
+    "form_scale": 1.10,
+    "break_scale": 1.7,
+    "min_spacing": 5,
+    "zmin": 10.0,
+    "max_reactions": 10
+  },
+
+  "neb": {
+    "z_threshold": 7.5,
+    "n_images": 8,
+    "n_images_eval": 10,
+    "maxForks": 4
+  },
+
+  "retrain": {
+    "seeds": 3,
+    "atomic_numbers": [1, 6, 7, 8, 14],
+    "E0s": {
+      "1": -13.55946263,
+      "6": -157.53735191,
+      "7": -265.91593046,
+      "8": -431.59585675,
+      "14": -102.46189747
+    },
+    "pt_train_file": "mp",
+    "num_samples_pt": 1000,
+    "batch_size": 2,
+    "hidden_irreps": "128x0e + 128x1o",
+    "r_max": 6.0,
+    "max_num_epochs": 50
+  }
+}
