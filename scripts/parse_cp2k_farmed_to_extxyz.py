@@ -24,7 +24,7 @@ def parse_cp2k_farming_output(filepath):
                     continue
 
             # Detect start of force block
-            elif 'ATOMIC FORCES in ' in line:
+            elif 'FORCES|' in line and 'Atomic forces' in line:
                 in_force_block = True
                 skip_lines = 2  # Skip headers
                 continue
