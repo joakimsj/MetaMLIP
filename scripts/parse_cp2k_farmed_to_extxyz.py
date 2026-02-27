@@ -17,14 +17,14 @@ def parse_cp2k_farming_output(filepath):
                 scf_converged = False
 
             # Parse energy
-            if 'ENERGY|' in line and 'Total FORCE_EVAL ( QS ) energy [a.u.]:' in line:
+            if 'ENERGY|' in line and 'Total FORCE_EVAL ( QS ) energy :' in line:
                 try:
                     energy = float(line.split()[-1]) * Hartree  # Convert to eV
                 except ValueError:
                     continue
 
             # Detect start of force block
-            elif 'ATOMIC FORCES in [a.u.]' in line:
+            elif 'ATOMIC FORCES in ' in line:
                 in_force_block = True
                 skip_lines = 2  # Skip headers
                 continue

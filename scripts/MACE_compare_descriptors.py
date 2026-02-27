@@ -29,7 +29,7 @@ parser.add_argument("--output", default="frames_for_DFT_eval_filtered.xyz",
 parser.add_argument("--threshold", type=float, default=1.0,
                     help="Descriptor distance threshold")
 parser.add_argument("--model",
-                    default="/scratch/project_462000838/active_learning_nextflow/input/MACE_models/mace-mpa-0-medium.model",
+                    default="/scratch/project_462001097/jestilj1/MetaMLIP/input/MACE_models/mace-mpa-0-medium.model",
                     help="Path to MACE model")
 parser.add_argument("--max_structures", type=int, default=None,
                     help="Maximum number of structures to keep")

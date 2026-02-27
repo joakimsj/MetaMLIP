@@ -12,27 +12,35 @@ from mace.calculators import MACECalculator
 parser = argparse.ArgumentParser(description="Run NEB with MACE committee and evaluate path uncertainty")
 
 parser.add_argument("--initial_file", type=str, required=True)
-parser.add_argument("--final_file", type=str, required=True)
+parser.add_argument("--final_file", type=str)
 parser.add_argument("--model_paths", type=str, nargs='+', required=True)
 parser.add_argument("--z_threshold", type=float, default=2.0)
 parser.add_argument("--n_images", type=int, default=8)
 parser.add_argument("--n_images_eval", type=int, default=10)
+parser.add_argument("--max_steps", type=int, default=1500)  
 
 args = parser.parse_args()
 
 initial_name = os.path.splitext(os.path.basename(args.initial_file))[0]
 
 # === Read structures ===
-initial = read(args.initial_file)
-final = read(args.final_file)
+if args.final_file is not None:
+    initial = read(args.initial_file)
+    final = read(args.final_file)
+else:
+    initial = read(args.initial_file, '0')
+    final = read(args.initial_file, '-1')
 
 # === MACE Committee ===
-mace_committee = MACECalculator(
-    model_paths=args.model_paths,
-    device='cuda',
-    default_dtype='float64',
-    head='default'
-)
+def make_calc():
+    return MACECalculator(
+        model_paths=args.model_paths,
+        device='cuda',
+        default_dtype='float64',
+        head='default'
+    )
+
+mace_committee = make_calc()
 
 # === Fix slab atoms ===
 def fix_slab(atoms):
@@ -43,65 +51,79 @@ def fix_slab(atoms):
 fix_slab(initial)
 fix_slab(final)
 
-# === Relax endpoints ===
-initial.calc = mace_committee
-final.calc = mace_committee
-
-QuasiNewton(initial).run(fmax=0.05)
-QuasiNewton(final).run(fmax=0.05)
-
 # === Build NEB images ===
-def make_calc():
-    return MACECalculator(
-        model_paths=args.model_paths,
-        device='cuda',
-        default_dtype='float64',
-        head='default'
-    )
-
-images = [initial]
-for _ in range(args.n_images):
-    images.append(initial.copy())
-images.append(final)
-
-for img in images:
-    fix_slab(img)
-    img.calc = make_calc()
-
-# === NEB ===
-neb = NEB(images)
-neb.interpolate('idpp')
-
 trajfile = f"{initial_name}_neb_committee.traj"
-logfile = f"{initial_name}_neb_committee.log"
+logfile  = f"{initial_name}_neb_committee.log"
 
-qn = QuasiNewton(neb, trajectory=trajfile, logfile=logfile)
-qn.run(fmax=0.05)
+restart = os.path.exists(trajfile)
+
+# === Relax endpoints only if fresh run ===
+if not restart:
+    print("No existing NEB trajectory → relaxing endpoints")
+    initial.calc = mace_committee
+    final.calc   = mace_committee
+    QuasiNewton(initial).run(fmax=0.05)
+    QuasiNewton(final).run(fmax=0.05)
+else:
+    print("Restart detected → skipping endpoint relaxation")
+
+# === Build or load NEB images ===
+if restart:
+    print(f"Loading previous NEB state from {trajfile}")
+    try:
+        images = read(trajfile, f"-{args.n_images_eval}:")
+        for img in images:
+            fix_slab(img)
+            img.calc = make_calc()
+    except Exception:
+        print("Failed to load trajectory — rebuilding NEB band")
+        restart = False
+
+if not restart:
+    images = [initial]
+    for _ in range(args.n_images):
+        images.append(initial.copy())
+    images.append(final)
+
+    for img in images:
+        fix_slab(img)
+        img.calc = make_calc()
+
+    neb = NEB(images, climb=True)
+    neb.interpolate('idpp')
+else:
+    neb = NEB(images, climb=True)
+
+# === Run NEB safely ===
+neb_failed = False
+
+try:
+    opt = QuasiNewton(neb, trajectory=trajfile, logfile=logfile)
+    opt.run(fmax=0.05, steps=args.max_steps)
+except Exception as e:
+    print("\n!!! NEB optimization failed !!!")
+    print(str(e))
+    neb_failed = True
+
+# === Load trajectory safely ===
+if os.path.exists(trajfile):
+    images_eval = read(trajfile, f"-{args.n_images_eval}:")
+else:
+    print("No trajectory found — using interpolated band")
+    images_eval = neb.images
 
 # === Uncertainty computation ===
 def compute_force_uncertainty(atoms, mace_committee, cutoff=5.0):
-    """
-    Returns:
-        force_sigma : (n_atoms,)   magnitude-based atomic uncertainty
-        s_local     : (n_atoms,)   locally averaged uncertainty
-    """
-
     atoms.calc = mace_committee
-    _ = atoms.get_forces()  # ensure results are populated
+    _ = atoms.get_forces()
 
-    # --- per-model forces ---
     forces_comm = atoms.calc.results["forces_comm"]
-    # shape: (n_models, n_atoms, 3)
+    force_std = forces_comm.std(axis=0)
 
-    # --- per-atom, per-component std ---
-    force_std = forces_comm.std(axis=0)     # (n_atoms, 3)
+    s_atom = force_std.mean(axis=1)
+    force_sigma = np.linalg.norm(force_std, axis=1)
 
-    # --- atomic uncertainty measures ---
-    s_atom = force_std.mean(axis=1)          # component-averaged
-    force_sigma = np.linalg.norm(force_std, axis=1)  # magnitude-based
-
-    # --- neighbor list for local aggregation ---
-    cutoffs = [cutoff/2] * len(atoms)
+    cutoffs = [cutoff / 2] * len(atoms)
     nl = NeighborList(cutoffs, self_interaction=True, bothways=True)
     nl.update(atoms)
 
@@ -112,66 +134,54 @@ def compute_force_uncertainty(atoms, mace_committee, cutoff=5.0):
 
     return force_sigma, s_local
 
-# === Evaluate U_path ===
-images = read(trajfile, f"-{n_images_eval}:")
-
+# === Evaluate uncertainty ===
 images_out = []
 U_path = []
 
-for img in images:
-    force_sigma, s_local = compute_force_uncertainty(img, mace_committee)
+for img in images_eval:
+    try:
+        force_sigma, s_local = compute_force_uncertainty(img, mace_committee)
+    except Exception:
+        continue
 
-    # store per-atom fields for OVITO
     img.arrays["per_atom_force_uncertainty"] = force_sigma
     img.arrays["local_force_uncertainty"] = s_local
-
-    # store per-image diagnostics
     img.info["mean_local_uncertainty"] = float(s_local.mean())
     img.info["max_local_uncertainty"] = float(s_local.max())
 
     U_path.append(s_local.mean())
     images_out.append(img)
 
+if len(images_out) == 0:
+    print("WARNING: No valid frames — falling back to endpoints")
+    images_out = [initial, final]
+
 U_path = np.array(U_path)
 
-print("\n===== NEB Path Uncertainty =====")
-print("U_path =", U_path)
-print("Integrated path uncertainty =", U_path.mean())
-print("Max path uncertainty =", U_path.max())
-
-# Save uncertainty profile
 np.savetxt(f"{initial_name}_U_path.dat", U_path)
 
-# Save annotated trajectory for OVITO
 write(f"{initial_name}_neb_committee_uncertainty.xyz",
       images_out,
       format="extxyz",
       write_results=False)
 
-# === Harvest high-uncertainty frames for DFT ===
-
-# Sort images by max local uncertainty (descending)
+# === Harvest frames ===
 harvest = sorted(
     images_out,
-    key=lambda img: img.info["max_local_uncertainty"],
+    key=lambda img: img.info.get("max_local_uncertainty", 0.0),
     reverse=True
 )
 
-# Choose top-k frames
-top_k = min(5, len(harvest))   # <-- tune this
+top_k = min(5, len(harvest))
 harvest = harvest[:top_k]
 
-# Save DFT training structures
 dft_xyz = f"{initial_name}_neb_dft_harvest.xyz"
 
-write(
-    dft_xyz,
-    harvest,
-    format="extxyz",
-    write_results=False
-)
+if len(harvest) == 0:
+    print("WARNING: Empty harvest — dumping fallback frames")
+    harvest = images_out[:min(3, len(images_out))]
 
-print(f"\nSaved {len(harvest)} high-uncertainty NEB frames for DFT → {dft_xyz}")
-print("Max uncertainties:", [img.info["max_local_uncertainty"] for img in harvest])
+write(dft_xyz, harvest, format="extxyz", write_results=False)
 
-      
+print(f"\nSaved {len(harvest)} frames → {dft_xyz}")
+print("Max uncertainties:", [img.info.get("max_local_uncertainty", 0.0) for img in harvest])
