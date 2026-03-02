@@ -582,7 +582,7 @@ process reTrainMACE {
       --max_num_epochs=${params.retrain.max_num_epochs} \
       --restart_latest \
       --device=${params.retrain.device} \
-      --swa=${params.retrain.swa} \
+      --swa \
       --swa_energy_weight=${params.retrain.swa_energy_weight} \
       --swa_forces_weight=${params.retrain.swa_forces_weight} \
       --swa_stress_weight=${params.retrain.swa_stress_weight} \
