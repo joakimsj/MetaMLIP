@@ -63,6 +63,33 @@ def detect_n_images(images, tol=1e-3):
             return i
     raise RuntimeError("Could not detect NEB band size")
 
+class BarrierMonitor:
+    def __init__(self, neb, tol=0.01, window=20):
+        self.neb = neb
+        self.tol = tol
+        self.window = window
+        self.history = []
+
+    def get_barrier(self):
+        energies = [img.get_potential_energy() for img in self.neb.images]
+        return max(energies) - energies[0]
+
+    def __call__(self):
+        barrier = self.get_barrier()
+        self.history.append(barrier)
+
+        print(f"Barrier: {barrier:.6f} eV")
+
+        if len(self.history) > self.window:
+            recent = self.history[-self.window:]
+            delta = max(recent) - min(recent)
+
+            print(f"Barrier fluctuation (last {self.window}): {delta:.6f} eV")
+
+            if delta < self.tol:
+                print("Barrier converged → stopping optimization")
+                raise StopIteration
+
 # === Build NEB images ===
 trajfile = f"{initial_name}_neb_committee.traj"
 logfile  = f"{initial_name}_neb_committee.log"
@@ -126,7 +153,23 @@ neb_failed = False
 
 try:
     opt = QuasiNewton(neb, trajectory=trajfile, logfile=logfile)
+
+    monitor = BarrierMonitor(neb, tol=0.02, window=20)
+    opt.attach(monitor, interval=5)
+
     opt.run(fmax=0.05, steps=args.max_steps)
+
+except StopIteration:
+    print("Stopped early due to barrier convergence")
+
+except RuntimeError as e:
+    if "StopIteration" in str(e):
+        print("Stopped early due to barrier convergence (wrapped)")
+    else:
+        print("\n!!! NEB optimization failed !!!")
+        print(str(e))
+        neb_failed = True
+
 except Exception as e:
     print("\n!!! NEB optimization failed !!!")
     print(str(e))
