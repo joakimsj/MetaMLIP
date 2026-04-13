@@ -16,10 +16,16 @@ parser.add_argument("--final_file", type=str)
 parser.add_argument("--model_paths", type=str, nargs='+', required=True)
 parser.add_argument("--z_threshold", type=float, default=2.0)
 parser.add_argument("--n_images", type=int, default=8)
-parser.add_argument("--n_images_eval", type=int, default=10)
-parser.add_argument("--max_steps", type=int, default=1500)  
+parser.add_argument("--max_steps", type=int, default=1500)
 
 args = parser.parse_args()
+
+use_committee = len(args.model_paths) > 1
+
+if use_committee:
+    print(f"Using committee of {len(args.model_paths)} models")
+else:
+    print("Single model NEB detected → skipping uncertainty estimation")
 
 initial_name = os.path.splitext(os.path.basename(args.initial_file))[0]
 
@@ -40,8 +46,6 @@ def make_calc():
         head='default'
     )
 
-mace_committee = make_calc()
-
 # === Fix slab atoms ===
 def fix_slab(atoms):
     fixed_indices = [i for i, atom in enumerate(atoms)
@@ -51,30 +55,46 @@ def fix_slab(atoms):
 fix_slab(initial)
 fix_slab(final)
 
+# === Detect NEB band size ===
+def detect_n_images(images, tol=1e-3):
+    ref = images[0].get_positions()
+    for i in range(1, len(images)):
+        if np.allclose(images[i].get_positions(), ref, atol=tol):
+            return i
+    raise RuntimeError("Could not detect NEB band size")
+
 # === Build NEB images ===
 trajfile = f"{initial_name}_neb_committee.traj"
 logfile  = f"{initial_name}_neb_committee.log"
 
 restart = os.path.exists(trajfile)
 
-# === Relax endpoints only if fresh run ===
+# === Relax endpoints ===
 if not restart:
     print("No existing NEB trajectory → relaxing endpoints")
-    initial.calc = mace_committee
-    final.calc   = mace_committee
+    initial.calc = make_calc()
+    final.calc   = make_calc()
     QuasiNewton(initial).run(fmax=0.05)
     QuasiNewton(final).run(fmax=0.05)
 else:
     print("Restart detected → skipping endpoint relaxation")
 
-# === Build or load NEB images ===
+# === Build or load images ===
 if restart:
     print(f"Loading previous NEB state from {trajfile}")
     try:
-        images = read(trajfile, f"-{args.n_images_eval}:")
+        all_images = read(trajfile, ":")
+
+        n_images_detected = detect_n_images(all_images)
+        print(f"Detected {n_images_detected} images per NEB iteration")
+
+        images = all_images[-n_images_detected:]
+
         for img in images:
             fix_slab(img)
             img.calc = make_calc()
+            img.get_potential_energy()  # ensure energy exists
+
     except Exception:
         print("Failed to load trajectory — rebuilding NEB band")
         restart = False
@@ -89,12 +109,19 @@ if not restart:
         fix_slab(img)
         img.calc = make_calc()
 
+    # FORCE energy evaluation 
+    print("Evaluating initial energies for all images...")
+    for i, img in enumerate(images):
+        e = img.get_potential_energy()
+        print(f"Image {i}: {e:.6f} eV")
+
     neb = NEB(images, climb=True)
     neb.interpolate('idpp')
+
 else:
     neb = NEB(images, climb=True)
 
-# === Run NEB safely ===
+# === Run NEB ===
 neb_failed = False
 
 try:
@@ -105,17 +132,23 @@ except Exception as e:
     print(str(e))
     neb_failed = True
 
-# === Load trajectory safely ===
+# === Extract FINAL converged band ===
 if os.path.exists(trajfile):
-    images_eval = read(trajfile, f"-{args.n_images_eval}:")
+    all_images = read(trajfile, ":")
+    n_images_detected = detect_n_images(all_images)
+    print(f"Extracting final NEB band ({n_images_detected} images)")
+    images_eval = all_images[-n_images_detected:]
 else:
-    print("No trajectory found — using interpolated band")
+    print("No trajectory found — using current NEB images")
     images_eval = neb.images
 
 # === Uncertainty computation ===
-def compute_force_uncertainty(atoms, mace_committee, cutoff=5.0):
-    atoms.calc = mace_committee
+def compute_force_uncertainty(atoms, cutoff=5.0):
+    atoms.calc = make_calc()
     _ = atoms.get_forces()
+
+    if "forces_comm" not in atoms.calc.results:
+        raise RuntimeError("No committee forces available")
 
     forces_comm = atoms.calc.results["forces_comm"]
     force_std = forces_comm.std(axis=0)
@@ -134,31 +167,45 @@ def compute_force_uncertainty(atoms, mace_committee, cutoff=5.0):
 
     return force_sigma, s_local
 
-# === Evaluate uncertainty ===
+
+# === Evaluate uncertainty OR fallback ===
 images_out = []
 U_path = []
 
-for img in images_eval:
-    try:
-        force_sigma, s_local = compute_force_uncertainty(img, mace_committee)
-    except Exception:
-        continue
+if use_committee:
+    print("Evaluating uncertainty with committee...")
 
-    img.arrays["per_atom_force_uncertainty"] = force_sigma
-    img.arrays["local_force_uncertainty"] = s_local
-    img.info["mean_local_uncertainty"] = float(s_local.mean())
-    img.info["max_local_uncertainty"] = float(s_local.max())
+    for img in images_eval:
+        try:
+            force_sigma, s_local = compute_force_uncertainty(img)
+        except Exception:
+            continue
 
-    U_path.append(s_local.mean())
-    images_out.append(img)
+        img.arrays["per_atom_force_uncertainty"] = force_sigma
+        img.arrays["local_force_uncertainty"] = s_local
+        img.info["mean_local_uncertainty"] = float(s_local.mean())
+        img.info["max_local_uncertainty"] = float(s_local.max())
 
-if len(images_out) == 0:
-    print("WARNING: No valid frames — falling back to endpoints")
-    images_out = [initial, final]
+        U_path.append(s_local.mean())
+        images_out.append(img)
 
-U_path = np.array(U_path)
+    if len(images_out) == 0:
+        print("WARNING: No valid frames — falling back to endpoints")
+        images_out = [initial, final]
 
-np.savetxt(f"{initial_name}_U_path.dat", U_path)
+    U_path = np.array(U_path)
+    np.savetxt(f"{initial_name}_U_path.dat", U_path)
+
+else:
+    print("Skipping uncertainty evaluation")
+
+    # Just pass through NEB images
+    images_out = images_eval
+
+    # Optional: still write a dummy file for compatibility
+    np.savetxt(f"{initial_name}_U_path.dat",
+               np.zeros(len(images_out)),
+               header="dummy uncertainty (single model)")
 
 write(f"{initial_name}_neb_committee_uncertainty.xyz",
       images_out,
@@ -166,22 +213,26 @@ write(f"{initial_name}_neb_committee_uncertainty.xyz",
       write_results=False)
 
 # === Harvest frames ===
-harvest = sorted(
-    images_out,
-    key=lambda img: img.info.get("max_local_uncertainty", 0.0),
-    reverse=True
-)
+if use_committee:
+    harvest = sorted(
+        images_out,
+        key=lambda img: img.info.get("max_local_uncertainty", 0.0),
+        reverse=True
+    )
+else:
+    # No uncertainty → just take central images (most interesting region)
+    mid = len(images_out) // 2
+    harvest = images_out[max(0, mid-2):mid+3]
 
-top_k = min(5, len(harvest))
-harvest = harvest[:top_k]
-
-dft_xyz = f"{initial_name}_neb_dft_harvest.xyz"
+harvest = harvest[:min(5, len(harvest))]
 
 if len(harvest) == 0:
     print("WARNING: Empty harvest — dumping fallback frames")
     harvest = images_out[:min(3, len(images_out))]
 
-write(dft_xyz, harvest, format="extxyz", write_results=False)
 
-print(f"\nSaved {len(harvest)} frames → {dft_xyz}")
+write(f"{initial_name}_neb_dft_harvest.xyz", harvest,
+      format="extxyz", write_results=False)
+
+print(f"\nSaved {len(harvest)} frames")
 print("Max uncertainties:", [img.info.get("max_local_uncertainty", 0.0) for img in harvest])
