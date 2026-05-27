@@ -14,53 +14,8 @@ dft_images  = read(args.dft_file, ":")
 mlip_images = read(args.mlip_file, ":")
 
 def read_forces_from_extxyz(filename):
-    forces_all = []
-
-    with open(filename, "r") as f:
-        lines = f.readlines()
-
-    i = 0
-    while i < len(lines):
-        n_atoms = int(lines[i].strip())
-        header = lines[i+1]
-
-        # Parse Properties line
-        prop_str = header.split("Properties=")[1].split()[0]
-        props = prop_str.split(":")
-
-        # Build column map
-        columns = []
-        col_idx = 0
-        j = 0
-        while j < len(props):
-            name = props[j]
-            count = int(props[j+2])
-            columns.append((name, col_idx, col_idx + count))
-            col_idx += count
-            j += 3
-
-        # Find force columns
-        force_col = None
-        for name, start, end in columns:
-            if name.lower() == "forces":
-                force_col = (start, end)
-
-        if force_col is None:
-            raise RuntimeError("No forces found in file")
-
-        start, end = force_col
-
-        # Read atoms
-        frame_forces = []
-        for k in range(n_atoms):
-            parts = lines[i+2+k].split()
-            vals = list(map(float, parts[1:]))  # skip species
-            frame_forces.append(vals[start:end])
-
-        forces_all.append(np.array(frame_forces))
-
-        i += n_atoms + 2
-
+    frames = read(filename, index=":")  
+    forces_all = [atoms.get_forces() for atoms in frames]
     return forces_all
 
 # === Read trajectories ===
@@ -71,6 +26,20 @@ if len(dft_forces) != len(mlip_forces):
     raise ValueError("Number of frames does not match")
 
 all_errors = []
+
+# === DEBUG print statements ===
+for i, (F_dft, F_mlip) in enumerate(zip(dft_forces, mlip_forces)):
+
+    diff = F_mlip - F_dft
+    err = np.linalg.norm(diff, axis=1)
+
+    print("F_dft[216] =", F_dft[216])
+    print("F_mlip[216] =", F_mlip[216])
+    print("diff[216] =", diff[216])
+    print("err[216] =", err[216])
+
+    break
+# ==============================
 
 for i, (F_dft, F_mlip) in enumerate(zip(dft_forces, mlip_forces)):
 
@@ -90,7 +59,7 @@ for i, (F_dft, F_mlip) in enumerate(zip(dft_forces, mlip_forces)):
     print(f"Frame {i:3d} | RMSE: {rmse:.6f} | MAE: {mae:.6f} | Max: {maxe:.6f}")
 
 # === Global ===
-all_errors = np.concatenate(all_errors)  # ✅ FIX
+all_errors = np.concatenate(all_errors)  
 
 print("\n===== GLOBAL ERROR METRICS =====")
 print(f"RMSE: {np.sqrt((all_errors**2).mean()):.6f} eV/Å")
