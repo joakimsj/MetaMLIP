@@ -9,3 +9,5 @@ A Brief overview of contents:
 -	Codes for filtering data
 -	Codes for running DFT reference calculations
 -	Scripts for retraining the potentials based on selected data.
+
+**A more complete tutorial and examples will be made available when approaching a more ready state of the workflow!**
