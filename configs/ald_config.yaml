@@ -1,0 +1,88 @@
+# Template test
+output_dir: ald_output
+random_seed: 123
+stop_on_incomplete_phase: true
+
+system:
+  slab_file: /scratch/project_462001547/jestilj1/MetaMLIP/input/SiO2_start.traj
+  temperature_K: 500
+  timestep_fs: 1.0
+  # Fix atoms below z-coordinate in Angstrom;
+  fix_below_z_A: 3.0
+
+committee:
+  model_paths:
+    - MACE_model_seed_141575.model
+    - MACE_model_seed_180730.model
+    - MACE_model_seed_926103.model
+  device: cuda
+  dtype: float64
+  head: Default
+
+sampling:
+  max_cycles: 3
+  max_steps_per_pulse: 15000
+  check_interval: 20
+  insertion_height_A: 6.0
+  insertion_xy_range_A: 2.0
+
+plumed:
+  surface_r0_A: 2.2
+  ligand_r0_A: 2.0
+  pace: 300
+  height: 4.0
+  sigma_surface: 0.15
+  sigma_ligand: 0.15
+  biasfactor: 8.0
+  print_stride: 10
+  # Optional example:
+  ligand_lower_wall:
+    at: 0.15
+    kappa: 150.0
+
+uncertainty:
+  # Neighbor-averaging radius in Angstrom.
+  neighbor_cutoff_A: 5.0
+
+  # Select frames when either threshold is exceeded.
+  energy_variance_limit: 0.0015
+  local_force_uncertainty_limit: 0.0200
+
+  select_by_energy_variance: False
+  select_by_local_force_uncertainty: true
+
+ald:
+  # The current scaffold intentionally blocks purge until safe, chemistry-aware
+  # unbound-molecule detection has been implemented and validated.
+  sequence: [precursor_A, purge_A, precursor_B, purge_B]
+
+chemistry:
+  precursor_A:
+    molecule_file: /scratch/project_462001547/jestilj1/MetaMLIP/input/TDMAS_mol.traj
+    # Local, zero-based index, set to the reactive center.
+    center_index: 0
+    # Indices local to the molecule template, not the combined slab+precursor system.
+    # Fill these using a validated atom map; do not guess from element types.
+    ligand_indices: [1, 2, 3, 4]
+    # Surface atoms as ASE (zero-based) indices in the initial slab. Update for the structure used.
+    surface_group:
+      indices: [55, 56, 57, 58, 59, 60, 61, 62, 63, 78, 79, 80]
+    completion:
+      surface_cv_min: 1.5
+      ligand_cv_max: 2.5
+
+  precursor_B:
+    molecule_file: /scratch/project_462001547/jestilj1/MetaMLIP/input/H2O_mol.traj
+    # local, zero-based indices.
+    center_index: 0
+    ligand_indices: [1, 2]
+    # This group must describe reactive surface sites after the A half-cycle.
+    # Replace with verified sites for your actual slab.
+    surface_group:
+      indices: [55, 56, 57, 58, 59, 60, 61, 62, 63, 78, 79, 80]
+    # PROVISIONAL PLACEHOLDERS ONLY. The generic O-surface / O-H CVs do NOT
+    # establish water dissociation, hydroxyl formation, or surface saturation.
+    # Implement and validate chemistry-specific water-half-cycle completion first.
+    completion:
+      surface_cv_min: 1.5
+      ligand_cv_max: 2.5
