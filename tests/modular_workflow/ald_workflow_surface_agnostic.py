@@ -31,6 +31,22 @@ from ald_connectivity import (
     detect_bonds_hysteresis,
     find_connected_components,
 )
+from ald_state import (
+    ATOM_ID,
+    ATOM_ROLE,
+    IS_CENTER,
+    IS_DEPOSITED_CENTER,
+    MOLECULE_ID,
+    ROLE_PRECURSOR_A,
+    ROLE_WATER,
+    classify_water_oh_endpoint,
+    deposited_center_indices,
+    ensure_atom_provenance,
+    indices_for_atom_ids,
+    purge_detached_inserted_components,
+    register_inserted_molecule,
+    water_occupancy_status,
+)
 
 
 def load_config(path):
@@ -112,6 +128,7 @@ def build_connectivity_graph(atoms, connectivity_cfg=None):
 
 def initialize_surface_anchor_indices(atoms, connectivity_cfg=None):
     """Store the largest connected component of the initial slab as substrate anchors."""
+    ensure_atom_provenance(atoms)
     if len(atoms) == 0:
         raise ValueError("Cannot determine a surface anchor from an empty structure")
     bonds = build_connectivity_graph(atoms, connectivity_cfg)
@@ -124,6 +141,9 @@ def initialize_surface_anchor_indices(atoms, connectivity_cfg=None):
         ),
     )
     atoms.info["_ald_surface_anchor_indices"] = [int(i) for i in anchor_component]
+    atoms.info["_ald_surface_anchor_atom_ids"] = [
+        int(atoms.arrays[ATOM_ID][i]) for i in anchor_component
+    ]
     return anchor_component
 
 
@@ -177,6 +197,7 @@ def insert_molecule(atoms, molecule_file, height, xy_range, rng, sampling_cfg=No
     if height <= 0 or height_step <= 0 or clash_distance <= 0:
         raise ValueError("insertion height, height step, and clash distance must be positive")
 
+    ensure_atom_provenance(atoms)
     old_n = len(atoms)
     # Keep placement anchored to the substrate even if reaction-graph tracking
     # is disabled: a detached gas-phase molecule must not move later insertions
@@ -636,6 +657,10 @@ def _run_single_precursor_attempt(
             sampling_cfg=config["sampling"],
             connectivity_cfg=config.get("connectivity", {}),
         )
+        molecule_id = register_inserted_molecule(
+            atoms, inserted_indices, phase_name, int(precursor_cfg["center_index"])
+        )
+        inserted_atom_ids = [int(atoms.arrays[ATOM_ID][i]) for i in inserted_indices]
 
         if surface_group is None:
             surface_group = resolve_group(
@@ -708,7 +733,8 @@ def _run_single_precursor_attempt(
         saturation = precursor_cfg.get("saturation", {})
         criterion = str(saturation.get("criterion", "legacy_cv")).lower()
         allowed_criteria = {
-            "surface_bonds", "ligands_dissociated", "both", "legacy_cv", "molecular_graph"
+            "surface_bonds", "ligands_dissociated", "both", "legacy_cv",
+            "molecular_graph", "water_oh",
         }
         if criterion not in allowed_criteria:
             raise ValueError(
@@ -735,6 +761,11 @@ def _run_single_precursor_attempt(
                 raise ValueError(
                     f"{phase_name}: saturation.target_surface_bonds must be >= 1"
                 )
+        if criterion == "water_oh":
+            if not connectivity_enabled:
+                raise ValueError(f"{phase_name}: water_oh requires connectivity.enabled")
+            if phase_name != "precursor_B":
+                raise ValueError("water_oh criterion is reserved for precursor_B water attempts")
         if criterion in ("ligands_dissociated", "both") and "ligand_dissociation_distance_A" not in saturation:
             raise ValueError(
                 f"{phase_name}: criterion '{criterion}' requires saturation.ligand_dissociation_distance_A; "
@@ -761,6 +792,7 @@ def _run_single_precursor_attempt(
         last_ligand_anchor_distances = []
         last_bonded_surface_indices = []
         graph_bonded_surface_indices = []
+        water_endpoint = None
         connectivity_log = out_dir / "connectivity.jsonl"
 
         for step in range(check_interval, max_steps + 1, check_interval):
@@ -880,7 +912,17 @@ def _run_single_precursor_attempt(
                     ligand_dissociation_streak >= ligand_dissociation_required_checks
                 )
 
-            if cv is None and criterion != "molecular_graph":
+            water_endpoint = None
+            if criterion == "water_oh":
+                oxygen_local = int(precursor_cfg["center_index"])
+                hydrogen_local = [int(i) for i in precursor_cfg["ligand_indices"]]
+                water_endpoint = classify_water_oh_endpoint(
+                    confirmed_bonds,
+                    inserted_indices[oxygen_local],
+                    [inserted_indices[i] for i in hydrogen_local],
+                    surface_group,
+                )
+            if cv is None and criterion not in ("molecular_graph", "water_oh"):
                 continue
             ligand_max = saturation.get("ligand_cv_max", legacy_threshold.get("ligand_cv_max", 0.25))
             ligand_ok = cv is not None and cv["c_ligand"] <= float(ligand_max)
@@ -897,6 +939,8 @@ def _run_single_precursor_attempt(
                 else:
                     graph_ligand_ok = True
                 done = graph_surface_ok and graph_ligand_ok
+            elif criterion == "water_oh":
+                done = bool(water_endpoint["qualifies"])
             elif criterion == "ligands_dissociated":
                 done = ligand_dissociated_all
                 if saturation.get("also_require_surface_coordination", False):
@@ -931,6 +975,9 @@ def _run_single_precursor_attempt(
             "completed": bool(completed),
             "completion_step": completed_step,
             "saturation_criterion": criterion,
+            "inserted_molecule_id": int(molecule_id),
+            "inserted_atom_ids": inserted_atom_ids,
+            "water_oh_endpoint_at_end": water_endpoint if criterion == "water_oh" else None,
             "precursor_ligand_anchor_count": len(ligand_indices),
             "available_surface_atoms_at_pulse_start": len(surface_group),
             "detected_surface_atom_indices": list(map(int, surface_group)),
@@ -994,16 +1041,27 @@ def run_phase(atoms, phase_name, precursor_cfg, config, md_calc, monitor_calc, o
     Failed attempts stop the pulse because chemistry-aware removal of an unbound
     precursor is not implemented in this scaffold.
     """
+    ensure_atom_provenance(atoms)
+    if phase_name == "precursor_B":
+        return run_water_phase(
+            atoms, phase_name, precursor_cfg, config, md_calc, monitor_calc,
+            out_dir, rng, pulse_id=pulse_id,
+        )
+
     detector_cfg = precursor_cfg.get("surface_site_detection", {"enabled": False})
     inventory_cfg = precursor_cfg.get("surface_inventory", {})
     inventory_enabled = bool(inventory_cfg.get("enabled", False))
 
     # Preserve the old one-insertion behavior when no top-layer inventory is enabled.
     if not inventory_enabled:
-        return _run_single_precursor_attempt(
+        completed, inserted, bonds = _run_single_precursor_attempt(
             atoms, phase_name, precursor_cfg, config, md_calc, monitor_calc,
             out_dir, rng, pulse_id=pulse_id,
         )
+        if completed and phase_name == "precursor_A":
+            center = inserted[int(precursor_cfg["center_index"])]
+            atoms.arrays[IS_DEPOSITED_CENTER][center] = 1
+        return completed, inserted, bonds
 
     if not detector_cfg.get("enabled", False):
         raise ValueError(
@@ -1055,6 +1113,7 @@ def run_phase(atoms, phase_name, precursor_cfg, config, md_calc, monitor_calc, o
                 "status": "available",
                 "first_reacted_attempt": None,
                 "contacting_precursor_center_index": None,
+                "contacting_precursor_center_atom_id": None,
                 "contact_distance_A": None,
             }
             for idx in initial_surface_indices
@@ -1120,18 +1179,24 @@ def run_phase(atoms, phase_name, precursor_cfg, config, md_calc, monitor_calc, o
         # A site can be counted once even if several precursors contact it.
         newly_reacted = []
         if attempt_complete:
+            if phase_name == "precursor_A":
+                atoms.arrays[IS_DEPOSITED_CENTER][center_index] = 1
             for site in inventory["sites"]:
                 idx = int(site["atom_index"])
                 if idx in bonded and site["status"] == "available":
                     site["status"] = "reacted_proxy"
                     site["first_reacted_attempt"] = attempt
                     site["contacting_precursor_center_index"] = center_index
+                    site["contacting_precursor_center_atom_id"] = int(
+                        atoms.arrays[ATOM_ID][center_index]
+                    )
                     site["contact_distance_A"] = float(distances[str(idx)])
                     newly_reacted.append(idx)
 
         attempt_record = {
             "attempt": attempt,
             "precursor_center_index": center_index,
+            "precursor_center_atom_id": int(atoms.arrays[ATOM_ID][center_index]),
             "precursor_attempt_completed": bool(attempt_complete),
             "bonded_initial_surface_indices_at_end": bonded,
             "connectivity_source": "molecular_graph" if confirmed_bonds is not None else "distance_cutoff",
@@ -1155,9 +1220,11 @@ def run_phase(atoms, phase_name, precursor_cfg, config, md_calc, monitor_calc, o
         )
 
         if not attempt_complete:
-            # Do not insert another precursor on top of an unclassified/unpurged one.
-            inventory["stopped_reason"] = "precursor_attempt_incomplete; chemistry-aware purge required"
-            break
+            purge_result = purge_detached_inserted_components(
+                atoms, config.get("connectivity", {})
+            )
+            attempt_record["purge_after_incomplete_attempt"] = purge_result
+            save_inventory()
         if inventory["target_reached"]:
             pulse_complete = True
             break
@@ -1167,7 +1234,8 @@ def run_phase(atoms, phase_name, precursor_cfg, config, md_calc, monitor_calc, o
     inventory["pulse_completed"] = bool(pulse_complete)
     inventory["surface_inventory_note"] = (
         "Candidate sites are detected geometrically at pulse start. reacted_proxy is based on "
-        "direct center-to-site distance after a completed precursor attempt, not a validated bond classifier."
+        "persistent graph edges after a completed precursor attempt when connectivity is enabled; "
+        "otherwise it uses the configured distance cutoff. This remains a chemistry proxy."
     )
     save_inventory()
 
@@ -1176,16 +1244,195 @@ def run_phase(atoms, phase_name, precursor_cfg, config, md_calc, monitor_calc, o
     return pulse_complete, last_inserted, last_confirmed_bonds
 
 
-def purge_unbound_precursor(atoms, inserted_indices, precursor_cfg):
-    """
-    Conservative placeholder: no automatic atom deletion is performed.
-    Deleting molecules safely requires validated connectivity/bond-state detection.
-    This function deliberately raises until that chemistry-specific logic is implemented.
-    """
-    raise NotImplementedError(
-        "Implement chemistry-aware purge: distinguish intact gas-phase precursor from "
-        "chemisorbed fragments before deleting atoms. Do not delete by distance alone."
+def run_water_phase(atoms, phase_name, precursor_cfg, config, md_calc, monitor_calc,
+                    out_dir, rng, pulse_id="pulse_001"):
+    """Run water attempts and inventory distinct Si-bound OH molecules per A-Si."""
+    if not config.get("connectivity", {}).get("enabled", True):
+        raise ValueError("precursor_B water occupancy requires connectivity.enabled: true")
+    ensure_atom_provenance(atoms)
+    deposited_si = deposited_center_indices(atoms, ROLE_PRECURSOR_A)
+    if not deposited_si:
+        raise RuntimeError("precursor_B cannot run: no successfully deposited precursor_A Si centers")
+
+    inventory_cfg = precursor_cfg.get("surface_inventory", {})
+    max_attempts = max(1, int(inventory_cfg.get("max_adsorption_attempts", 10)))
+    target_per_si = int(inventory_cfg.get("target_waters_per_si", 2))
+    minimum_per_si = int(inventory_cfg.get("minimum_waters_per_si", 1))
+    if target_per_si < 1 or minimum_per_si < 1 or minimum_per_si > target_per_si:
+        raise ValueError("Water occupancy requires 1 <= minimum_waters_per_si <= target_waters_per_si")
+    center_local = int(precursor_cfg["center_index"])
+    hydrogen_local = [int(i) for i in precursor_cfg["ligand_indices"]]
+    template = read(precursor_cfg["molecule_file"])
+    if center_local < 0 or center_local >= len(template) or template[center_local].symbol != "O":
+        raise ValueError("precursor_B.center_index must identify the water oxygen")
+    if len(hydrogen_local) != 2 or any(
+        i < 0 or i >= len(template) or template[i].symbol != "H" for i in hydrogen_local
+    ):
+        raise ValueError("precursor_B.ligand_indices must identify exactly two water hydrogen atoms")
+
+    pulse_dir = out_dir / phase_name / str(pulse_id)
+    pulse_dir.mkdir(parents=True, exist_ok=True)
+    si_ids = [int(atoms.arrays[ATOM_ID][i]) for i in deposited_si]
+    inventory = {
+        "phase": phase_name,
+        "pulse_id": str(pulse_id),
+        "deposited_si_atom_ids": si_ids,
+        "minimum_waters_per_si": minimum_per_si,
+        "target_waters_per_si": target_per_si,
+        "max_adsorption_attempts": max_attempts,
+        "occupancy": {str(atom_id): [] for atom_id in si_ids},
+        "attempts": [],
+    }
+    # Carry qualifying waters from earlier cycles forward instead of resetting
+    # coverage at every B half-cycle. The full graph is a geometry-based snapshot;
+    # new-water acceptance below additionally uses per-attempt persistent edges.
+    connectivity_cfg = config.get("connectivity", {})
+    base_cutoffs = build_base_cutoffs(atoms, connectivity_cfg.get("atomic_radii_A"))
+    existing_bonds = detect_bonds_hysteresis(
+        atoms,
+        (),
+        base_cutoffs,
+        float(connectivity_cfg.get("form_scale", 1.10)),
+        float(connectivity_cfg.get("break_scale", 1.70)),
+        pair_cutoffs=connectivity_cfg.get("pair_cutoffs_A"),
     )
+    water_molecules = {}
+    for index, role in enumerate(atoms.arrays[ATOM_ROLE]):
+        if int(role) != ROLE_WATER or int(atoms.arrays[IS_CENTER][index]) != 1:
+            continue
+        molecule_id = int(atoms.arrays[MOLECULE_ID][index])
+        molecule_indices = [
+            j for j, candidate_id in enumerate(atoms.arrays[MOLECULE_ID])
+            if int(candidate_id) == molecule_id and atoms[j].symbol == "H"
+        ]
+        water_molecules[molecule_id] = (index, molecule_indices)
+    for molecule_id, (oxygen_index, hydrogen_indices) in water_molecules.items():
+        endpoint = classify_water_oh_endpoint(
+            existing_bonds, oxygen_index, hydrogen_indices, deposited_si
+        )
+        if not endpoint["qualifies"]:
+            continue
+        si_atom_id = int(atoms.arrays[ATOM_ID][endpoint["si_index"]])
+        records = inventory["occupancy"].get(str(si_atom_id))
+        if records is None or molecule_id in {int(x["molecule_id"]) for x in records}:
+            continue
+        records.append({
+            "molecule_id": molecule_id,
+            "oxygen_atom_id": int(atoms.arrays[ATOM_ID][oxygen_index]),
+            "hydrogen_atom_ids": [int(atoms.arrays[ATOM_ID][i]) for i in hydrogen_indices],
+            "retained_oh_hydrogen_atom_ids": [
+                int(atoms.arrays[ATOM_ID][i])
+                for i in endpoint["bonded_original_hydrogen_indices"]
+            ],
+            "attempt": "previous_cycle",
+        })
+    inventory_path = pulse_dir / "water_occupancy.json"
+
+    def save_inventory():
+        status = water_occupancy_status(
+            {si: [item["molecule_id"] for item in waters]
+             for si, waters in inventory["occupancy"].items()},
+            minimum_per_si,
+            target_per_si,
+        )
+        inventory.update(status)
+        inventory_path.write_text(json.dumps(inventory, indent=2) + "\n", encoding="utf-8")
+
+    save_inventory()
+    last_inserted, last_bonds = [], None
+    for attempt in range(1, max_attempts + 1):
+        if inventory["full_occupancy"]:
+            break
+        # Target only Si centers still below the configured occupancy cap.
+        current_map = indices_for_atom_ids(atoms, si_ids)
+        eligible_si_ids = [
+            atom_id for atom_id in si_ids
+            if len(inventory["occupancy"][str(atom_id)]) < target_per_si
+            and atom_id in current_map
+        ]
+        if not eligible_si_ids:
+            break
+        eligible_si_indices = [current_map[atom_id] for atom_id in eligible_si_ids]
+        complete, inserted, bonds = _run_single_precursor_attempt(
+            atoms, phase_name, precursor_cfg, config, md_calc, monitor_calc,
+            out_dir, rng, surface_indices_override=eligible_si_indices,
+            attempt_index=attempt, pulse_id=pulse_id,
+        )
+        last_inserted, last_bonds = inserted, bonds
+        oxygen_index = inserted[int(precursor_cfg["center_index"])]
+        h_indices = [inserted[int(i)] for i in precursor_cfg["ligand_indices"]]
+        endpoint = classify_water_oh_endpoint(
+            bonds or (), oxygen_index, h_indices, eligible_si_indices
+        )
+        endpoint["original_hydrogen_neighbor_atom_ids"] = {
+            str(atoms.arrays[ATOM_ID][int(h_idx)]): [
+                int(atoms.arrays[ATOM_ID][int(neighbor)])
+                for neighbor in neighbors
+            ]
+            for h_idx, neighbors in endpoint["original_hydrogen_neighbors"].items()
+        }
+        molecule_id = int(atoms.arrays[MOLECULE_ID][oxygen_index])
+        water_atom_ids = [int(atoms.arrays[ATOM_ID][i]) for i in inserted]
+        assigned_si_atom_id = None
+        if complete and endpoint["qualifies"]:
+            si_index = int(endpoint["si_index"])
+            assigned_si_atom_id = int(atoms.arrays[ATOM_ID][si_index])
+            occupancy = inventory["occupancy"][str(assigned_si_atom_id)]
+            if molecule_id not in {int(item["molecule_id"]) for item in occupancy}:
+                occupancy.append({
+                    "molecule_id": molecule_id,
+                    "oxygen_atom_id": int(atoms.arrays[ATOM_ID][oxygen_index]),
+                    "hydrogen_atom_ids": [int(atoms.arrays[ATOM_ID][i]) for i in h_indices],
+                    "retained_oh_hydrogen_atom_ids": [
+                        int(atoms.arrays[ATOM_ID][i])
+                        for i in endpoint["bonded_original_hydrogen_indices"]
+                    ],
+                    "other_original_hydrogen_atom_ids": [
+                        int(atoms.arrays[ATOM_ID][i])
+                        for i in h_indices
+                        if i not in endpoint["bonded_original_hydrogen_indices"]
+                    ],
+                    "original_hydrogen_neighbor_atom_ids": endpoint[
+                        "original_hydrogen_neighbor_atom_ids"
+                    ],
+                    "attempt": attempt,
+                })
+        record = {
+            "attempt": attempt,
+            "completed": bool(complete),
+            "water_molecule_id": molecule_id,
+            "water_atom_ids": water_atom_ids,
+            "endpoint": endpoint,
+            "assigned_deposited_si_atom_id": assigned_si_atom_id,
+            "qualifies": bool(complete and endpoint["qualifies"]),
+        }
+        inventory["attempts"].append(record)
+        if not record["qualifies"]:
+            record["purge"] = purge_detached_inserted_components(
+                atoms, config.get("connectivity", {})
+            )
+        save_inventory()
+        print(
+            f"{phase_name} [{pulse_id}] attempt {attempt}/{max_attempts}: "
+            f"qualifies={record['qualifies']}, occupancy={inventory['occupancy_counts']}"
+        )
+
+    save_inventory()
+    inventory["pulse_completed"] = bool(inventory["minimum_success"])
+    inventory["termination_reason"] = (
+        "full_occupancy_reached" if inventory["full_occupancy"] else
+        "minimum_success_attempt_budget_exhausted" if inventory["minimum_success"] else
+        "minimum_occupancy_not_reached"
+    )
+    inventory["chemistry_note"] = (
+        "Water qualifies only when a persistent graph contains exactly one deposited-Si/O edge "
+        "and exactly one original water O/H edge. Geometry-based graph edges require validation."
+    )
+    save_inventory()
+    (pulse_dir / "pulse_summary.json").write_text(
+        json.dumps(inventory, indent=2) + "\n", encoding="utf-8"
+    )
+    return bool(inventory["minimum_success"]), last_inserted, last_bonds
 
 
 def main():
@@ -1222,6 +1469,24 @@ def main():
                 print(f"cycle {i + 1}: {phase}")
         print("Dry-run only: no MACE/PLUMED dynamics were run.")
         return
+
+    # Validate that the configured water atom map matches the required O/H/OH
+    # classifier before loading accelerator-backed calculators.
+    water_cfg = cfg.get("chemistry", {}).get("precursor_B", {})
+    if water_cfg.get("saturation", {}).get("criterion") == "water_oh":
+        water_template = read(water_cfg["molecule_file"])
+        oxygen_index = int(water_cfg["center_index"])
+        hydrogen_indices = [int(i) for i in water_cfg.get("ligand_indices", [])]
+        if (
+            oxygen_index < 0 or oxygen_index >= len(water_template)
+            or water_template[oxygen_index].symbol != "O"
+        ):
+            raise ValueError("precursor_B.center_index must identify the water oxygen")
+        if len(hydrogen_indices) != 2 or any(
+            i < 0 or i >= len(water_template) or water_template[i].symbol != "H"
+            for i in hydrogen_indices
+        ):
+            raise ValueError("precursor_B.ligand_indices must identify exactly two water hydrogen atoms")
 
     atoms = read(cfg["system"]["slab_file"])
     if len(atoms) == 0:
@@ -1260,14 +1525,23 @@ def main():
         head=committee_cfg.get("head", "default"),
     )
 
-    # Purge is deliberately blocked until a chemistry-aware deletion/flow protocol is supplied.
     for cycle in range(int(cfg["sampling"]["max_cycles"])):
         for phase_name in phases:
             if phase_name in ("purge_A", "purge_B"):
-                raise NotImplementedError(
-                    "Purge phases are in the state machine but require chemistry-specific "
-                    "unbound-molecule detection before deleting atoms."
+                purge_result = purge_detached_inserted_components(
+                    atoms, cfg.get("connectivity", {})
                 )
+                purge_dir = out_dir / phase_name / f"cycle_{cycle + 1}"
+                purge_dir.mkdir(parents=True, exist_ok=True)
+                (purge_dir / "purge_summary.json").write_text(
+                    json.dumps(purge_result, indent=2) + "\n", encoding="utf-8"
+                )
+                print(
+                    f"{phase_name}: removed {purge_result['removed_atom_count']} detached "
+                    "inserted atoms/components"
+                )
+                write(out_dir / f"after_{phase_name}_cycle_{cycle + 1}.traj", atoms)
+                continue
             if phase_name not in cfg["chemistry"]:
                 raise KeyError(f"No chemistry configuration found for phase '{phase_name}'")
             success, inserted, _ = run_phase(

@@ -5,7 +5,7 @@ random_seed: 123
 stop_on_incomplete_phase: True
 
 system:
-  slab_file: /scratch/project_462001547/jestilj1/MetaMLIP/input/SiO2_start.traj
+  slab_file: SiO2_start.traj
   # Repeat the input slab in XY before dynamics; [1, 1] keeps the original cell.
   # Larger supercells increase atom count and computational cost approximately as nx*ny.
   supercell_xy: [1, 1]
@@ -85,7 +85,7 @@ ald:
 
 chemistry:
   precursor_A:
-    molecule_file: /scratch/project_462001547/jestilj1/MetaMLIP/input/TDMAS_mol.traj
+    molecule_file: TDMAS_mol.traj
     # Local, zero-based atom index in the precursor template.
     center_index: 0
     # One anchor index per ligand is recommended for ligand-dissociation mode.
@@ -112,7 +112,7 @@ chemistry:
       bond_distance_A: 2.2
 
   precursor_B:
-    molecule_file: /scratch/project_462001547/jestilj1/MetaMLIP/input/H2O_mol.traj
+    molecule_file: H2O_mol.traj
     center_index: 0
     # Verify that these are the intended H ligand-anchor indices in H2O_mol.traj.
     ligand_indices: [1, 2]
@@ -122,17 +122,13 @@ chemistry:
       top_layer_tolerance_A: 1.5
       elements: [O]
 
-    # Provisional CV-based completion only. Do not interpret this as proof of
-    # water dissociation or the intended Si-O-Si(OH)x termination.
-    completion:
-      surface_cv_min: 1.5
-      ligand_cv_max: 2.5
     saturation:
-      criterion: legacy_cv
-      surface_cv_min: 1.5
-      ligand_cv_max: 2.5
+      # Requires one persistent O(water)-Si(A) edge and exactly one persistent
+      # original O(water)-H edge. Validate geometric graph thresholds chemically.
+      criterion: water_oh
 
-    # Pulse inventory is intentionally disabled for water until its chemically
-    # meaningful site definition and reaction classifier are validated.
     surface_inventory:
-      enabled: false
+      enabled: true
+      minimum_waters_per_si: 1
+      target_waters_per_si: 2
+      max_adsorption_attempts: 20

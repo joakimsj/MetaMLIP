@@ -76,7 +76,25 @@ python ald_workflow_surface_agnostic.py --config ald_config.yaml
 
 The water-half-cycle CV thresholds are placeholders: an O–H coordination CV alone does not determine water dissociation or hydroxylation. Define and validate a reaction-specific endpoint before running production trajectories.
 
-The current script intentionally stops at purge states. This is a safety barrier, not an implementation omission to bypass: purge must distinguish gas-phase precursor from chemisorbed fragments based on the chemistry and current bonding state.
+Purge now removes complete graph components containing inserted atoms when they
+are disconnected from every atom in the original substrate, including singleton
+atoms. Components connected to the original substrate are preserved. This uses
+a conservative geometric connectivity envelope and is not a validated chemical
+desorption classifier; inspect purge summaries and trajectories before production.
+
+For precursor A, the configured `surface_inventory.target_fraction` remains a
+debugging target (currently 0.5) over the frozen top-layer geometric candidate
+set. It is not a claim of full physical layer coverage. Successful A centers
+are tracked by stable atom IDs for the water half-cycle.
+
+For precursor B, water success requires a persistent graph edge from the water
+oxygen to exactly one deposited A-Si and exactly one of that water's original
+O-H edges remaining. The occupancy inventory tracks distinct water molecules
+per deposited Si, with one as the minimum for pulse success and two as the full
+occupancy target. B continues bounded attempts toward two, then can advance if
+every deposited Si has at least one. These geometric edges and OH endpoint
+rules require chemistry-specific validation; the other hydrogen's transfer or
+dissociation destination is not currently proven by this classifier.
 
 ## Index conventions
 
