@@ -168,8 +168,8 @@ def highest_surface_bound_z(atoms, connectivity_cfg=None):
     return float(np.max(atoms.positions[bound_indices, 2])), bound_indices
 
 
-def insert_molecule(atoms, molecule_file, height, xy_range, rng, sampling_cfg=None,
-                    connectivity_cfg=None):
+def insert_molecule(atoms, molecule_file, height, xy_range, rng, temperature_K,
+                    sampling_cfg=None, connectivity_cfg=None):
     """Place a precursor in a periodic XY cell and search upward in Z for a clash-free placement.
 
     Candidate lateral positions are sampled in fractional coordinates of the
@@ -182,6 +182,8 @@ def insert_molecule(atoms, molecule_file, height, xy_range, rng, sampling_cfg=No
     ``clash_distance_A`` using ASE's
     minimum-image distance handling. This is a geometric overlap filter, not a
     guarantee of a chemically or dynamically suitable initial configuration.
+    The accepted molecule receives Maxwell-Boltzmann momenta at the simulation
+    temperature before it is appended, rather than inheriting zero momenta.
     """
     sampling_cfg = sampling_cfg or {}
     molecule_template = read(molecule_file)
@@ -260,6 +262,11 @@ def insert_molecule(atoms, molecule_file, height, xy_range, rng, sampling_cfg=No
 
             best_min_distance = max(best_min_distance, min_distance)
             if min_distance >= clash_distance:
+                MaxwellBoltzmannDistribution(
+                    candidate,
+                    temperature_K=float(temperature_K),
+                    rng=rng,
+                )
                 atoms.extend(candidate)
                 inserted = list(range(old_n, len(atoms)))
                 print(
@@ -654,6 +661,7 @@ def _run_single_precursor_attempt(
             float(config["sampling"]["insertion_height_A"]),
             float(config["sampling"]["insertion_xy_range_A"]),
             rng,
+            temperature_K=float(config["system"]["temperature_K"]),
             sampling_cfg=config["sampling"],
             connectivity_cfg=config.get("connectivity", {}),
         )

@@ -76,6 +76,11 @@ python ald_workflow_surface_agnostic.py --config ald_config.yaml
 
 The water-half-cycle CV thresholds are placeholders: an O–H coordination CV alone does not determine water dissociation or hydroxylation. Define and validate a reaction-specific endpoint before running production trajectories.
 
+Each precursor inserted during a pulse is initialized with Maxwell–Boltzmann
+momenta at `system.temperature_K`, using the workflow's seeded random generator.
+This applies to water as well as precursor A; the initial slab velocities are
+still assigned once at workflow startup.
+
 Purge now removes complete graph components containing inserted atoms when they
 are disconnected from every atom in the original substrate, including singleton
 atoms. Components connected to the original substrate are preserved. This uses

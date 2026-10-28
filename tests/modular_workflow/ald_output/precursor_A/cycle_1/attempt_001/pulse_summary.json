@@ -1,0 +1,1155 @@
+{
+  "phase": "precursor_A",
+  "completed": true,
+  "completion_step": 4360,
+  "saturation_criterion": "molecular_graph",
+  "inserted_molecule_id": 0,
+  "inserted_atom_ids": [
+    216,
+    217,
+    218,
+    219,
+    220,
+    221,
+    222,
+    223,
+    224,
+    225,
+    226,
+    227,
+    228,
+    229,
+    230,
+    231,
+    232,
+    233,
+    234,
+    235,
+    236,
+    237,
+    238,
+    239,
+    240,
+    241,
+    242,
+    243,
+    244
+  ],
+  "water_oh_endpoint_at_end": null,
+  "precursor_ligand_anchor_count": 4,
+  "available_surface_atoms_at_pulse_start": 18,
+  "detected_surface_atom_indices": [
+    38,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62,
+    63,
+    78,
+    79,
+    80,
+    84,
+    86,
+    88,
+    89,
+    91
+  ],
+  "bonded_surface_atoms_at_end_by_distance": 2,
+  "surface_bond_distance_cutoff_A": 2.2,
+  "surface_bond_consecutive_checks_required": 2,
+  "bonded_surface_fraction_of_initial_candidates": 0.1111111111111111,
+  "bonded_surface_atom_indices_at_end": [
+    59,
+    89
+  ],
+  "graph_connectivity_enabled": true,
+  "graph_form_scale": 1.1,
+  "graph_break_scale": 1.7,
+  "graph_persistent_checks_required": 2,
+  "confirmed_graph_bonds_at_end": [
+    {
+      "indices": [
+        18,
+        55
+      ],
+      "elements": [
+        "H",
+        "O"
+      ]
+    },
+    {
+      "indices": [
+        19,
+        56
+      ],
+      "elements": [
+        "H",
+        "O"
+      ]
+    },
+    {
+      "indices": [
+        20,
+        57
+      ],
+      "elements": [
+        "H",
+        "O"
+      ]
+    },
+    {
+      "indices": [
+        21,
+        38
+      ],
+      "elements": [
+        "H",
+        "O"
+      ]
+    },
+    {
+      "indices": [
+        21,
+        56
+      ],
+      "elements": [
+        "H",
+        "O"
+      ]
+    },
+    {
+      "indices": [
+        22,
+        84
+      ],
+      "elements": [
+        "H",
+        "O"
+      ]
+    },
+    {
+      "indices": [
+        23,
+        86
+      ],
+      "elements": [
+        "H",
+        "O"
+      ]
+    },
+    {
+      "indices": [
+        24,
+        58
+      ],
+      "elements": [
+        "H",
+        "O"
+      ]
+    },
+    {
+      "indices": [
+        25,
+        38
+      ],
+      "elements": [
+        "H",
+        "O"
+      ]
+    },
+    {
+      "indices": [
+        26,
+        60
+      ],
+      "elements": [
+        "H",
+        "O"
+      ]
+    },
+    {
+      "indices": [
+        27,
+        88
+      ],
+      "elements": [
+        "H",
+        "O"
+      ]
+    },
+    {
+      "indices": [
+        28,
+        89
+      ],
+      "elements": [
+        "H",
+        "O"
+      ]
+    },
+    {
+      "indices": [
+        29,
+        91
+      ],
+      "elements": [
+        "H",
+        "O"
+      ]
+    },
+    {
+      "indices": [
+        30,
+        61
+      ],
+      "elements": [
+        "H",
+        "O"
+      ]
+    },
+    {
+      "indices": [
+        31,
+        62
+      ],
+      "elements": [
+        "H",
+        "O"
+      ]
+    },
+    {
+      "indices": [
+        32,
+        63
+      ],
+      "elements": [
+        "H",
+        "O"
+      ]
+    },
+    {
+      "indices": [
+        33,
+        78
+      ],
+      "elements": [
+        "H",
+        "O"
+      ]
+    },
+    {
+      "indices": [
+        34,
+        80
+      ],
+      "elements": [
+        "H",
+        "O"
+      ]
+    },
+    {
+      "indices": [
+        35,
+        79
+      ],
+      "elements": [
+        "H",
+        "O"
+      ]
+    },
+    {
+      "indices": [
+        38,
+        187
+      ],
+      "elements": [
+        "O",
+        "Si"
+      ]
+    },
+    {
+      "indices": [
+        55,
+        189
+      ],
+      "elements": [
+        "O",
+        "Si"
+      ]
+    },
+    {
+      "indices": [
+        56,
+        183
+      ],
+      "elements": [
+        "O",
+        "Si"
+      ]
+    },
+    {
+      "indices": [
+        57,
+        187
+      ],
+      "elements": [
+        "O",
+        "Si"
+      ]
+    },
+    {
+      "indices": [
+        58,
+        190
+      ],
+      "elements": [
+        "O",
+        "Si"
+      ]
+    },
+    {
+      "indices": [
+        59,
+        188
+      ],
+      "elements": [
+        "O",
+        "Si"
+      ]
+    },
+    {
+      "indices": [
+        59,
+        216
+      ],
+      "elements": [
+        "O",
+        "Si"
+      ]
+    },
+    {
+      "indices": [
+        60,
+        186
+      ],
+      "elements": [
+        "O",
+        "Si"
+      ]
+    },
+    {
+      "indices": [
+        61,
+        196
+      ],
+      "elements": [
+        "O",
+        "Si"
+      ]
+    },
+    {
+      "indices": [
+        62,
+        194
+      ],
+      "elements": [
+        "O",
+        "Si"
+      ]
+    },
+    {
+      "indices": [
+        63,
+        192
+      ],
+      "elements": [
+        "O",
+        "Si"
+      ]
+    },
+    {
+      "indices": [
+        78,
+        196
+      ],
+      "elements": [
+        "O",
+        "Si"
+      ]
+    },
+    {
+      "indices": [
+        79,
+        192
+      ],
+      "elements": [
+        "O",
+        "Si"
+      ]
+    },
+    {
+      "indices": [
+        80,
+        194
+      ],
+      "elements": [
+        "O",
+        "Si"
+      ]
+    },
+    {
+      "indices": [
+        84,
+        183
+      ],
+      "elements": [
+        "O",
+        "Si"
+      ]
+    },
+    {
+      "indices": [
+        86,
+        189
+      ],
+      "elements": [
+        "O",
+        "Si"
+      ]
+    },
+    {
+      "indices": [
+        88,
+        186
+      ],
+      "elements": [
+        "O",
+        "Si"
+      ]
+    },
+    {
+      "indices": [
+        89,
+        188
+      ],
+      "elements": [
+        "O",
+        "Si"
+      ]
+    },
+    {
+      "indices": [
+        89,
+        216
+      ],
+      "elements": [
+        "O",
+        "Si"
+      ]
+    },
+    {
+      "indices": [
+        91,
+        190
+      ],
+      "elements": [
+        "O",
+        "Si"
+      ]
+    },
+    {
+      "indices": [
+        216,
+        219
+      ],
+      "elements": [
+        "Si",
+        "N"
+      ]
+    },
+    {
+      "indices": [
+        217,
+        244
+      ],
+      "elements": [
+        "H",
+        "H"
+      ]
+    },
+    {
+      "indices": [
+        218,
+        221
+      ],
+      "elements": [
+        "N",
+        "C"
+      ]
+    },
+    {
+      "indices": [
+        218,
+        225
+      ],
+      "elements": [
+        "N",
+        "C"
+      ]
+    },
+    {
+      "indices": [
+        219,
+        233
+      ],
+      "elements": [
+        "N",
+        "C"
+      ]
+    },
+    {
+      "indices": [
+        220,
+        228
+      ],
+      "elements": [
+        "N",
+        "H"
+      ]
+    },
+    {
+      "indices": [
+        220,
+        237
+      ],
+      "elements": [
+        "N",
+        "C"
+      ]
+    },
+    {
+      "indices": [
+        220,
+        241
+      ],
+      "elements": [
+        "N",
+        "C"
+      ]
+    },
+    {
+      "indices": [
+        221,
+        222
+      ],
+      "elements": [
+        "C",
+        "H"
+      ]
+    },
+    {
+      "indices": [
+        221,
+        223
+      ],
+      "elements": [
+        "C",
+        "H"
+      ]
+    },
+    {
+      "indices": [
+        221,
+        224
+      ],
+      "elements": [
+        "C",
+        "H"
+      ]
+    },
+    {
+      "indices": [
+        225,
+        226
+      ],
+      "elements": [
+        "C",
+        "H"
+      ]
+    },
+    {
+      "indices": [
+        225,
+        227
+      ],
+      "elements": [
+        "C",
+        "H"
+      ]
+    },
+    {
+      "indices": [
+        229,
+        230
+      ],
+      "elements": [
+        "C",
+        "H"
+      ]
+    },
+    {
+      "indices": [
+        229,
+        231
+      ],
+      "elements": [
+        "C",
+        "H"
+      ]
+    },
+    {
+      "indices": [
+        229,
+        232
+      ],
+      "elements": [
+        "C",
+        "H"
+      ]
+    },
+    {
+      "indices": [
+        233,
+        234
+      ],
+      "elements": [
+        "C",
+        "H"
+      ]
+    },
+    {
+      "indices": [
+        233,
+        235
+      ],
+      "elements": [
+        "C",
+        "H"
+      ]
+    },
+    {
+      "indices": [
+        233,
+        236
+      ],
+      "elements": [
+        "C",
+        "H"
+      ]
+    },
+    {
+      "indices": [
+        237,
+        238
+      ],
+      "elements": [
+        "C",
+        "H"
+      ]
+    },
+    {
+      "indices": [
+        237,
+        239
+      ],
+      "elements": [
+        "C",
+        "H"
+      ]
+    },
+    {
+      "indices": [
+        237,
+        240
+      ],
+      "elements": [
+        "C",
+        "H"
+      ]
+    },
+    {
+      "indices": [
+        241,
+        242
+      ],
+      "elements": [
+        "C",
+        "H"
+      ]
+    },
+    {
+      "indices": [
+        241,
+        243
+      ],
+      "elements": [
+        "C",
+        "H"
+      ]
+    }
+  ],
+  "graph_bonded_surface_atom_indices_at_end": [
+    59,
+    89
+  ],
+  "graph_reaction_events": [
+    {
+      "phase": "precursor_A",
+      "step": 340,
+      "formed_bonds": [],
+      "broken_bonds": [
+        {
+          "indices": [
+            216,
+            217
+          ],
+          "elements": [
+            "Si",
+            "H"
+          ]
+        }
+      ]
+    },
+    {
+      "phase": "precursor_A",
+      "step": 420,
+      "formed_bonds": [
+        {
+          "indices": [
+            216,
+            217
+          ],
+          "elements": [
+            "Si",
+            "H"
+          ]
+        }
+      ],
+      "broken_bonds": []
+    },
+    {
+      "phase": "precursor_A",
+      "step": 2260,
+      "formed_bonds": [
+        {
+          "indices": [
+            60,
+            216
+          ],
+          "elements": [
+            "O",
+            "Si"
+          ]
+        }
+      ],
+      "broken_bonds": []
+    },
+    {
+      "phase": "precursor_A",
+      "step": 2460,
+      "formed_bonds": [],
+      "broken_bonds": [
+        {
+          "indices": [
+            60,
+            216
+          ],
+          "elements": [
+            "O",
+            "Si"
+          ]
+        }
+      ]
+    },
+    {
+      "phase": "precursor_A",
+      "step": 2940,
+      "formed_bonds": [
+        {
+          "indices": [
+            62,
+            216
+          ],
+          "elements": [
+            "O",
+            "Si"
+          ]
+        }
+      ],
+      "broken_bonds": []
+    },
+    {
+      "phase": "precursor_A",
+      "step": 3160,
+      "formed_bonds": [
+        {
+          "indices": [
+            220,
+            228
+          ],
+          "elements": [
+            "N",
+            "H"
+          ]
+        }
+      ],
+      "broken_bonds": []
+    },
+    {
+      "phase": "precursor_A",
+      "step": 3180,
+      "formed_bonds": [],
+      "broken_bonds": [
+        {
+          "indices": [
+            225,
+            228
+          ],
+          "elements": [
+            "C",
+            "H"
+          ]
+        }
+      ]
+    },
+    {
+      "phase": "precursor_A",
+      "step": 3240,
+      "formed_bonds": [],
+      "broken_bonds": [
+        {
+          "indices": [
+            216,
+            220
+          ],
+          "elements": [
+            "Si",
+            "N"
+          ]
+        }
+      ]
+    },
+    {
+      "phase": "precursor_A",
+      "step": 3340,
+      "formed_bonds": [],
+      "broken_bonds": [
+        {
+          "indices": [
+            216,
+            217
+          ],
+          "elements": [
+            "Si",
+            "H"
+          ]
+        }
+      ]
+    },
+    {
+      "phase": "precursor_A",
+      "step": 3380,
+      "formed_bonds": [],
+      "broken_bonds": [
+        {
+          "indices": [
+            241,
+            244
+          ],
+          "elements": [
+            "C",
+            "H"
+          ]
+        }
+      ]
+    },
+    {
+      "phase": "precursor_A",
+      "step": 3460,
+      "formed_bonds": [],
+      "broken_bonds": [
+        {
+          "indices": [
+            62,
+            216
+          ],
+          "elements": [
+            "O",
+            "Si"
+          ]
+        }
+      ]
+    },
+    {
+      "phase": "precursor_A",
+      "step": 3500,
+      "formed_bonds": [
+        {
+          "indices": [
+            217,
+            244
+          ],
+          "elements": [
+            "H",
+            "H"
+          ]
+        }
+      ],
+      "broken_bonds": []
+    },
+    {
+      "phase": "precursor_A",
+      "step": 3700,
+      "formed_bonds": [],
+      "broken_bonds": [
+        {
+          "indices": [
+            216,
+            218
+          ],
+          "elements": [
+            "Si",
+            "N"
+          ]
+        }
+      ]
+    },
+    {
+      "phase": "precursor_A",
+      "step": 4120,
+      "formed_bonds": [
+        {
+          "indices": [
+            59,
+            216
+          ],
+          "elements": [
+            "O",
+            "Si"
+          ]
+        }
+      ],
+      "broken_bonds": []
+    },
+    {
+      "phase": "precursor_A",
+      "step": 4300,
+      "formed_bonds": [
+        {
+          "indices": [
+            25,
+            38
+          ],
+          "elements": [
+            "H",
+            "O"
+          ]
+        }
+      ],
+      "broken_bonds": [
+        {
+          "indices": [
+            25,
+            59
+          ],
+          "elements": [
+            "H",
+            "O"
+          ]
+        }
+      ]
+    },
+    {
+      "phase": "precursor_A",
+      "step": 4340,
+      "formed_bonds": [
+        {
+          "indices": [
+            21,
+            56
+          ],
+          "elements": [
+            "H",
+            "O"
+          ]
+        }
+      ],
+      "broken_bonds": []
+    },
+    {
+      "phase": "precursor_A",
+      "step": 4360,
+      "formed_bonds": [
+        {
+          "indices": [
+            89,
+            216
+          ],
+          "elements": [
+            "O",
+            "Si"
+          ]
+        }
+      ],
+      "broken_bonds": [
+        {
+          "indices": [
+            219,
+            229
+          ],
+          "elements": [
+            "N",
+            "C"
+          ]
+        }
+      ]
+    }
+  ],
+  "precursor_connected_fragments_at_end": [
+    {
+      "fragment_id": 22,
+      "atom_indices": [
+        28,
+        59,
+        89,
+        188,
+        216,
+        219,
+        233,
+        234,
+        235,
+        236
+      ],
+      "atom_count": 10,
+      "composition": {
+        "C": 1,
+        "H": 4,
+        "N": 1,
+        "O": 2,
+        "Si": 2
+      },
+      "contains_substrate_atoms": true,
+      "substrate_atom_indices": [
+        59,
+        89
+      ],
+      "classification": "substrate_connected"
+    },
+    {
+      "fragment_id": 179,
+      "atom_indices": [
+        217,
+        244
+      ],
+      "atom_count": 2,
+      "composition": {
+        "H": 2
+      },
+      "contains_substrate_atoms": false,
+      "substrate_atom_indices": [],
+      "classification": "detached_or_free"
+    },
+    {
+      "fragment_id": 180,
+      "atom_indices": [
+        218,
+        221,
+        222,
+        223,
+        224,
+        225,
+        226,
+        227
+      ],
+      "atom_count": 8,
+      "composition": {
+        "C": 2,
+        "H": 5,
+        "N": 1
+      },
+      "contains_substrate_atoms": false,
+      "substrate_atom_indices": [],
+      "classification": "detached_or_free"
+    },
+    {
+      "fragment_id": 181,
+      "atom_indices": [
+        220,
+        228,
+        237,
+        238,
+        239,
+        240,
+        241,
+        242,
+        243
+      ],
+      "atom_count": 9,
+      "composition": {
+        "C": 2,
+        "H": 6,
+        "N": 1
+      },
+      "contains_substrate_atoms": false,
+      "substrate_atom_indices": [],
+      "classification": "detached_or_free"
+    },
+    {
+      "fragment_id": 182,
+      "atom_indices": [
+        229,
+        230,
+        231,
+        232
+      ],
+      "atom_count": 4,
+      "composition": {
+        "C": 1,
+        "H": 3
+      },
+      "contains_substrate_atoms": false,
+      "substrate_atom_indices": [],
+      "classification": "detached_or_free"
+    }
+  ],
+  "center_to_surface_distances_A": {
+    "38": 4.096799525032628,
+    "55": 7.292296755634355,
+    "56": 5.492509792605957,
+    "57": 5.939926072468368,
+    "58": 5.003341549981465,
+    "59": 2.0626808517042288,
+    "60": 4.957382226994231,
+    "61": 3.9884897236582844,
+    "62": 4.307466742407864,
+    "63": 8.194482317365429,
+    "78": 6.838813931238968,
+    "79": 7.661898180815436,
+    "80": 4.960038407159055,
+    "84": 6.167007215010847,
+    "86": 6.825325316086932,
+    "88": 3.4849005083066187,
+    "89": 2.047839891154644,
+    "91": 7.399174864467332
+  },
+  "final_c_surface": 1.364649,
+  "final_c_ligand": 0.702658,
+  "ligand_dissociation_distance_cutoff_A": null,
+  "final_ligand_anchor_distances_A": [],
+  "ligand_dissociation_consecutive_checks_required": 2,
+  "note": "Top-layer membership, distance-cutoff contacts, and ligand-anchor dissociation are geometry-based proxies; validate them against chemistry-specific bond analysis."
+}

@@ -1,0 +1,215 @@
+{
+  "phase": "precursor_B",
+  "completed": true,
+  "completion_step": 480,
+  "saturation_criterion": "water_oh",
+  "inserted_molecule_id": 2,
+  "inserted_atom_ids": [
+    248,
+    249,
+    250
+  ],
+  "water_oh_endpoint_at_end": {
+    "qualifies": true,
+    "si_index": 216,
+    "reason": "si_bound_oh",
+    "bonded_original_hydrogen_indices": [
+      227
+    ],
+    "bonded_deposited_si_indices": [
+      216
+    ],
+    "original_hydrogen_neighbors": {
+      "226": [
+        222
+      ],
+      "227": [
+        225
+      ]
+    }
+  },
+  "precursor_ligand_anchor_count": 2,
+  "available_surface_atoms_at_pulse_start": 1,
+  "detected_surface_atom_indices": [
+    216
+  ],
+  "bonded_surface_atoms_at_end_by_distance": 0,
+  "surface_bond_distance_cutoff_A": null,
+  "surface_bond_consecutive_checks_required": 2,
+  "bonded_surface_fraction_of_initial_candidates": null,
+  "bonded_surface_atom_indices_at_end": [],
+  "graph_connectivity_enabled": true,
+  "graph_form_scale": 1.1,
+  "graph_break_scale": 1.7,
+  "graph_persistent_checks_required": 2,
+  "confirmed_graph_bonds_at_end": [
+    {
+      "indices": [
+        216,
+        217
+      ],
+      "elements": [
+        "Si",
+        "N"
+      ]
+    },
+    {
+      "indices": [
+        216,
+        225
+      ],
+      "elements": [
+        "Si",
+        "O"
+      ]
+    },
+    {
+      "indices": [
+        222,
+        226
+      ],
+      "elements": [
+        "O",
+        "H"
+      ]
+    },
+    {
+      "indices": [
+        225,
+        227
+      ],
+      "elements": [
+        "O",
+        "H"
+      ]
+    }
+  ],
+  "graph_bonded_surface_atom_indices_at_end": [
+    216
+  ],
+  "graph_reaction_events": [
+    {
+      "phase": "precursor_B",
+      "step": 40,
+      "formed_bonds": [
+        {
+          "indices": [
+            216,
+            222
+          ],
+          "elements": [
+            "Si",
+            "O"
+          ]
+        }
+      ],
+      "broken_bonds": []
+    },
+    {
+      "phase": "precursor_B",
+      "step": 400,
+      "formed_bonds": [
+        {
+          "indices": [
+            216,
+            225
+          ],
+          "elements": [
+            "Si",
+            "O"
+          ]
+        }
+      ],
+      "broken_bonds": []
+    },
+    {
+      "phase": "precursor_B",
+      "step": 460,
+      "formed_bonds": [
+        {
+          "indices": [
+            222,
+            226
+          ],
+          "elements": [
+            "O",
+            "H"
+          ]
+        }
+      ],
+      "broken_bonds": []
+    },
+    {
+      "phase": "precursor_B",
+      "step": 480,
+      "formed_bonds": [],
+      "broken_bonds": [
+        {
+          "indices": [
+            216,
+            222
+          ],
+          "elements": [
+            "Si",
+            "O"
+          ]
+        },
+        {
+          "indices": [
+            225,
+            226
+          ],
+          "elements": [
+            "O",
+            "H"
+          ]
+        }
+      ]
+    }
+  ],
+  "precursor_connected_fragments_at_end": [
+    {
+      "fragment_id": 216,
+      "atom_indices": [
+        216,
+        217,
+        225,
+        227
+      ],
+      "atom_count": 4,
+      "composition": {
+        "H": 1,
+        "N": 1,
+        "O": 1,
+        "Si": 1
+      },
+      "contains_substrate_atoms": true,
+      "substrate_atom_indices": [
+        216
+      ],
+      "classification": "substrate_connected"
+    },
+    {
+      "fragment_id": 221,
+      "atom_indices": [
+        222,
+        226
+      ],
+      "atom_count": 2,
+      "composition": {
+        "H": 1,
+        "O": 1
+      },
+      "contains_substrate_atoms": false,
+      "substrate_atom_indices": [],
+      "classification": "detached_or_free"
+    }
+  ],
+  "center_to_surface_distances_A": {},
+  "final_c_surface": 0.613836,
+  "final_c_ligand": 0.9949,
+  "ligand_dissociation_distance_cutoff_A": null,
+  "final_ligand_anchor_distances_A": [],
+  "ligand_dissociation_consecutive_checks_required": 2,
+  "note": "Top-layer membership, distance-cutoff contacts, and ligand-anchor dissociation are geometry-based proxies; validate them against chemistry-specific bond analysis."
+}

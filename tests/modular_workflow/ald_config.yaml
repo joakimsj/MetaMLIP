@@ -107,7 +107,7 @@ chemistry:
 
     surface_inventory:
       enabled: true
-      target_fraction: 0.5
+      target_fraction: 0.1
       max_adsorption_attempts: 10
       bond_distance_A: 2.2
 

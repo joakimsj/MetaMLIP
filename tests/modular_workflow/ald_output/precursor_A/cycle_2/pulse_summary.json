@@ -1,0 +1,288 @@
+{
+  "phase": "precursor_A",
+  "pulse_id": "cycle_2",
+  "surface_z_max_at_pulse_start_A": 12.782735576356728,
+  "top_layer_tolerance_A": 1.5,
+  "candidate_count_at_pulse_start": 18,
+  "target_fraction": 0.1,
+  "contact_distance_cutoff_A": 2.2,
+  "max_adsorption_attempts": 10,
+  "sites": [
+    {
+      "atom_index": 38,
+      "element": "O",
+      "initial_position_A": [
+        3.437096596816785,
+        9.148554355759275,
+        12.237298044177395
+      ],
+      "status": "available",
+      "first_reacted_attempt": null,
+      "contacting_precursor_center_index": null,
+      "contacting_precursor_center_atom_id": null,
+      "contact_distance_A": null
+    },
+    {
+      "atom_index": 55,
+      "element": "O",
+      "initial_position_A": [
+        8.162078124748321,
+        3.0887609996263583,
+        12.288508040220584
+      ],
+      "status": "available",
+      "first_reacted_attempt": null,
+      "contacting_precursor_center_index": null,
+      "contacting_precursor_center_atom_id": null,
+      "contact_distance_A": null
+    },
+    {
+      "atom_index": 56,
+      "element": "O",
+      "initial_position_A": [
+        5.952377153467672,
+        7.641919998469555,
+        12.022787545400702
+      ],
+      "status": "available",
+      "first_reacted_attempt": null,
+      "contacting_precursor_center_index": null,
+      "contacting_precursor_center_atom_id": null,
+      "contact_distance_A": null
+    },
+    {
+      "atom_index": 57,
+      "element": "O",
+      "initial_position_A": [
+        3.4457253698063104,
+        11.925427011008962,
+        12.559968312841987
+      ],
+      "status": "available",
+      "first_reacted_attempt": null,
+      "contacting_precursor_center_index": null,
+      "contacting_precursor_center_atom_id": null,
+      "contact_distance_A": null
+    },
+    {
+      "atom_index": 58,
+      "element": "O",
+      "initial_position_A": [
+        3.7920299334174867,
+        3.2960634426119766,
+        12.782735576356728
+      ],
+      "status": "reacted_proxy",
+      "first_reacted_attempt": 1,
+      "contacting_precursor_center_index": 216,
+      "contacting_precursor_center_atom_id": 251,
+      "contact_distance_A": 1.708687882399172
+    },
+    {
+      "atom_index": 59,
+      "element": "O",
+      "initial_position_A": [
+        1.549864881392736,
+        7.636082552779124,
+        12.743637214965453
+      ],
+      "status": "available",
+      "first_reacted_attempt": null,
+      "contacting_precursor_center_index": null,
+      "contacting_precursor_center_atom_id": null,
+      "contact_distance_A": null
+    },
+    {
+      "atom_index": 60,
+      "element": "O",
+      "initial_position_A": [
+        -0.8148435161247742,
+        11.647518464010313,
+        12.468557763142705
+      ],
+      "status": "available",
+      "first_reacted_attempt": null,
+      "contacting_precursor_center_index": null,
+      "contacting_precursor_center_atom_id": null,
+      "contact_distance_A": null
+    },
+    {
+      "atom_index": 61,
+      "element": "O",
+      "initial_position_A": [
+        -1.5067668291849554,
+        3.507638464011541,
+        12.246111519130126
+      ],
+      "status": "available",
+      "first_reacted_attempt": null,
+      "contacting_precursor_center_index": null,
+      "contacting_precursor_center_atom_id": null,
+      "contact_distance_A": null
+    },
+    {
+      "atom_index": 62,
+      "element": "O",
+      "initial_position_A": [
+        -3.8987945224553147,
+        7.508492950054217,
+        12.236432527960378
+      ],
+      "status": "available",
+      "first_reacted_attempt": null,
+      "contacting_precursor_center_index": null,
+      "contacting_precursor_center_atom_id": null,
+      "contact_distance_A": null
+    },
+    {
+      "atom_index": 63,
+      "element": "O",
+      "initial_position_A": [
+        -6.09186237639158,
+        11.735123655245305,
+        12.680334275848379
+      ],
+      "status": "available",
+      "first_reacted_attempt": null,
+      "contacting_precursor_center_index": null,
+      "contacting_precursor_center_atom_id": null,
+      "contact_distance_A": null
+    },
+    {
+      "atom_index": 78,
+      "element": "O",
+      "initial_position_A": [
+        13.376569700678463,
+        0.8298637015486586,
+        12.289090908952359
+      ],
+      "status": "available",
+      "first_reacted_attempt": null,
+      "contacting_precursor_center_index": null,
+      "contacting_precursor_center_atom_id": null,
+      "contact_distance_A": null
+    },
+    {
+      "atom_index": 79,
+      "element": "O",
+      "initial_position_A": [
+        8.31246338809754,
+        9.186697666543845,
+        12.288058652247846
+      ],
+      "status": "available",
+      "first_reacted_attempt": null,
+      "contacting_precursor_center_index": null,
+      "contacting_precursor_center_atom_id": null,
+      "contact_distance_A": null
+    },
+    {
+      "atom_index": 80,
+      "element": "O",
+      "initial_position_A": [
+        10.702330595051912,
+        4.81128508407908,
+        12.149583754182432
+      ],
+      "status": "available",
+      "first_reacted_attempt": null,
+      "contacting_precursor_center_index": null,
+      "contacting_precursor_center_atom_id": null,
+      "contact_distance_A": null
+    },
+    {
+      "atom_index": 84,
+      "element": "O",
+      "initial_position_A": [
+        5.848272562866761,
+        4.921564301773798,
+        12.438758306294051
+      ],
+      "status": "available",
+      "first_reacted_attempt": null,
+      "contacting_precursor_center_index": null,
+      "contacting_precursor_center_atom_id": null,
+      "contact_distance_A": null
+    },
+    {
+      "atom_index": 86,
+      "element": "O",
+      "initial_position_A": [
+        8.597702399753384,
+        0.5622082085918308,
+        12.046093897659329
+      ],
+      "status": "available",
+      "first_reacted_attempt": null,
+      "contacting_precursor_center_index": null,
+      "contacting_precursor_center_atom_id": null,
+      "contact_distance_A": null
+    },
+    {
+      "atom_index": 88,
+      "element": "O",
+      "initial_position_A": [
+        -1.7049882267076126,
+        9.17590443577787,
+        12.288525823293062
+      ],
+      "status": "available",
+      "first_reacted_attempt": null,
+      "contacting_precursor_center_index": null,
+      "contacting_precursor_center_atom_id": null,
+      "contact_distance_A": null
+    },
+    {
+      "atom_index": 89,
+      "element": "O",
+      "initial_position_A": [
+        0.9214734482094209,
+        5.102932900422066,
+        12.329486982553878
+      ],
+      "status": "available",
+      "first_reacted_attempt": null,
+      "contacting_precursor_center_index": null,
+      "contacting_precursor_center_atom_id": null,
+      "contact_distance_A": null
+    },
+    {
+      "atom_index": 91,
+      "element": "O",
+      "initial_position_A": [
+        3.0297282745389356,
+        0.9585642737164677,
+        12.197062555394972
+      ],
+      "status": "reacted_proxy",
+      "first_reacted_attempt": 1,
+      "contacting_precursor_center_index": 216,
+      "contacting_precursor_center_atom_id": 251,
+      "contact_distance_A": 1.9225981811577413
+    }
+  ],
+  "attempts": [
+    {
+      "attempt": 1,
+      "precursor_center_index": 216,
+      "precursor_center_atom_id": 251,
+      "precursor_attempt_completed": true,
+      "bonded_initial_surface_indices_at_end": [
+        58,
+        91
+      ],
+      "connectivity_source": "molecular_graph",
+      "newly_counted_surface_indices": [
+        58,
+        91
+      ],
+      "unique_reacted_site_count_after_attempt": 2,
+      "note": "reacted_proxy is based on a persistent molecular-graph edge after a completed attempt; validate chemically."
+    }
+  ],
+  "unique_reacted_site_count": 2,
+  "surface_coverage_fraction": 0.1111111111111111,
+  "target_reached": true,
+  "pulse_completed": true,
+  "surface_inventory_note": "Candidate sites are detected geometrically at pulse start. reacted_proxy is based on persistent graph edges after a completed precursor attempt when connectivity is enabled; otherwise it uses the configured distance cutoff. This remains a chemistry proxy."
+}
