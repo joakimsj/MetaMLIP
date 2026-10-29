@@ -1,0 +1,188 @@
+32
+GPU is available/Torch version:
+True
+2.6.0+rocm6.1
+MACE Version:
+0.3.16
+Running MTD...
+/LUMI_TYKKY_nbrEGej/miniforge/envs/env1/lib/python3.10/site-packages/e3nn/o3/_wigner.py:10: UserWarning: Environment variable TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD detected, since the`weights_only` argument was not explicitly passed to `torch.load`, forcing weights_only=False.
+  _Jd, _W3j_flat, _W3j_indices = torch.load(os.path.join(os.path.dirname(__file__), 'constants.pt'))
+Error while loading libcue_ops.so: libnvrtc.so.12: cannot open shared object file: No such file or directory
+/LUMI_TYKKY_nbrEGej/miniforge/envs/env1/lib/python3.10/site-packages/mace/calculators/mace.py:226: UserWarning: Environment variable TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD detected, since the`weights_only` argument was not explicitly passed to `torch.load`, forcing weights_only=False.
+  torch.load(f=model_path, map_location=device)
+/LUMI_TYKKY_nbrEGej/miniforge/envs/env1/lib/python3.10/site-packages/mace/calculators/mace.py:226: UserWarning: Environment variable TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD detected, since the`weights_only` argument was not explicitly passed to `torch.load`, forcing weights_only=False.
+  torch.load(f=model_path, map_location=device)
+/LUMI_TYKKY_nbrEGej/miniforge/envs/env1/lib/python3.10/site-packages/mace/calculators/mace.py:226: UserWarning: Environment variable TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD detected, since the`weights_only` argument was not explicitly passed to `torch.load`, forcing weights_only=False.
+  torch.load(f=model_path, map_location=device)
+/LUMI_TYKKY_nbrEGej/miniforge/envs/env1/lib/python3.10/site-packages/mace/calculators/mace.py:226: UserWarning: Environment variable TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD detected, since the`weights_only` argument was not explicitly passed to `torch.load`, forcing weights_only=False.
+  torch.load(f=model_path, map_location=device)
+/LUMI_TYKKY_nbrEGej/miniforge/envs/env1/lib/python3.10/site-packages/mace/calculators/mace.py:226: UserWarning: Environment variable TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD detected, since the`weights_only` argument was not explicitly passed to `torch.load`, forcing weights_only=False.
+  torch.load(f=model_path, map_location=device)
+/LUMI_TYKKY_nbrEGej/miniforge/envs/env1/lib/python3.10/site-packages/mace/calculators/mace.py:226: UserWarning: Environment variable TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD detected, since the`weights_only` argument was not explicitly passed to `torch.load`, forcing weights_only=False.
+  torch.load(f=model_path, map_location=device)
++++ Loading the PLUMED kernel runtime +++
++++ PLUMED_KERNEL="/LUMI_TYKKY_nbrEGej/miniforge/envs/env1/lib/libplumedKernel.so" +++
+PLUMED: PLUMED is starting
+PLUMED: Version: 2.9.2 (git: Unknown) compiled on Sep  4 2024 at 12:23:39
+PLUMED: Please cite these papers when using PLUMED [1][2]
+PLUMED: For further information see the PLUMED web page at http://www.plumed.org
+PLUMED: Root: /LUMI_TYKKY_nbrEGej/miniforge/envs/env1/lib/plumed
+PLUMED: For installed feature, see /LUMI_TYKKY_nbrEGej/miniforge/envs/env1/lib/plumed/src/config/config.txt
+PLUMED: Molecular dynamics engine: ASE
+PLUMED: Precision of reals: 8
+PLUMED: Running over 1 node
+PLUMED: Number of threads: 1
+PLUMED: Cache line size: 512
+PLUMED: Number of atoms: 245
+PLUMED: File suffix: 
+PLUMED: Timestep: 0.010181
+PLUMED: KbT: 4.157230
+PLUMED: Relevant bibliography:
+PLUMED:   [1] The PLUMED consortium, Nat. Methods 16, 670 (2019)
+PLUMED:   [2] Tribello, Bonomi, Branduardi, Camilloni, and Bussi, Comput. Phys. Commun. 185, 604 (2014)
+PLUMED: Please read and cite where appropriate!
+PLUMED: Finished setup
+PLUMED: Action UNITS
+PLUMED:   with label @0
+PLUMED:   length: A = 0.1 nm
+PLUMED:   energy: 96.4853 kj/mol
+PLUMED:   time: 0.0101805 ps
+PLUMED:   charge: e
+PLUMED:   mass: amu
+PLUMED:   using physical units
+PLUMED:   inside PLUMED, Boltzmann constant is 8.61733e-05
+PLUMED: Action COORDINATION
+PLUMED:   with label c_surface
+PLUMED:   between two groups of 1 and 18 atoms
+PLUMED:   first group:
+PLUMED:   217  
+PLUMED:   second group:
+PLUMED:   39  56  57  58  59  60  61  62  63  64  79  80  81  85  87  89  90  92  
+PLUMED:   using periodic boundary conditions
+PLUMED:   contacts are counted with cutoff 2.2.  Using rational switching function with parameters d0=0 nn=6 mm=12
+PLUMED: Action COORDINATION
+PLUMED:   with label c_ligand
+PLUMED:   between two groups of 1 and 4 atoms
+PLUMED:   first group:
+PLUMED:   217  
+PLUMED:   second group:
+PLUMED:   218  219  220  221  
+PLUMED:   using periodic boundary conditions
+PLUMED:   contacts are counted with cutoff 2.  Using rational switching function with parameters d0=0 nn=6 mm=12
+PLUMED: Action LOWER_WALLS
+PLUMED:   with label wall_ligand
+PLUMED:   with arguments c_ligand
+PLUMED:   added component to this action:  wall_ligand.bias 
+PLUMED:   at 0.150000
+PLUMED:   with an offset 0.000000
+PLUMED:   with force constant 150.000000
+PLUMED:   and exponent 2.000000
+PLUMED:   rescaled 1.000000
+PLUMED:   added component to this action:  wall_ligand.force2 
+PLUMED: Action METAD
+PLUMED:   with label metad
+PLUMED:   with arguments c_surface c_ligand
+PLUMED:   added component to this action:  metad.bias 
+PLUMED:   Gaussian width  0.150000 0.150000  Gaussian height 4.000000
+PLUMED:   Gaussian deposition pace 300
+PLUMED:   Gaussian file HILLS
+PLUMED:   Well-Tempered Bias Factor 8.000000
+PLUMED:   Hills relaxation time (tau) 22.620498
+PLUMED:   KbT 0.043087
+PLUMED:   Bibliography [1][2]
+PLUMED: Relevant bibliography:
+PLUMED:   [1] Laio and Parrinello, PNAS 99, 12562 (2002)
+PLUMED:   [2] Barducci, Bussi, and Parrinello, Phys. Rev. Lett. 100, 020603 (2008)
+PLUMED: Please read and cite where appropriate!
+PLUMED: Action PRINT
+PLUMED:   with label @5
+PLUMED:   with stride 10
+PLUMED:   with arguments c_surface c_ligand metad.bias
+PLUMED:   on file COLVAR
+PLUMED:   with format  %f
+PLUMED: Action FLUSH
+PLUMED:   with label @6
+PLUMED:   with stride 1
++++ Loading the PLUMED kernel runtime +++
++++ PLUMED_KERNEL="/LUMI_TYKKY_nbrEGej/miniforge/envs/env1/lib/libplumedKernel.so" +++
+PLUMED: PLUMED is starting
+PLUMED: Version: 2.9.2 (git: Unknown) compiled on Sep  4 2024 at 12:23:39
+PLUMED: Please cite these papers when using PLUMED [1][2]
+PLUMED: For further information see the PLUMED web page at http://www.plumed.org
+PLUMED: Root: /LUMI_TYKKY_nbrEGej/miniforge/envs/env1/lib/plumed
+PLUMED: For installed feature, see /LUMI_TYKKY_nbrEGej/miniforge/envs/env1/lib/plumed/src/config/config.txt
+PLUMED: Molecular dynamics engine: ASE
+PLUMED: Precision of reals: 8
+PLUMED: Running over 1 node
+PLUMED: Number of threads: 1
+PLUMED: Cache line size: 512
+PLUMED: Number of atoms: 238
+PLUMED: File suffix: 
+PLUMED: Timestep: 0.010181
+PLUMED: KbT: 4.157230
+PLUMED: Relevant bibliography:
+PLUMED:   [1] The PLUMED consortium, Nat. Methods 16, 670 (2019)
+PLUMED:   [2] Tribello, Bonomi, Branduardi, Camilloni, and Bussi, Comput. Phys. Commun. 185, 604 (2014)
+PLUMED: Please read and cite where appropriate!
+PLUMED: Finished setup
+PLUMED: Action UNITS
+PLUMED:   with label @0
+PLUMED:   length: A = 0.1 nm
+PLUMED:   energy: 96.4853 kj/mol
+PLUMED:   time: 0.0101805 ps
+PLUMED:   charge: e
+PLUMED:   mass: amu
+PLUMED:   using physical units
+PLUMED:   inside PLUMED, Boltzmann constant is 8.61733e-05
+PLUMED: Action COORDINATION
+PLUMED:   with label c_surface
+PLUMED:   between two groups of 1 and 1 atoms
+PLUMED:   first group:
+PLUMED:   236  
+PLUMED:   second group:
+PLUMED:   217  
+PLUMED:   using periodic boundary conditions
+PLUMED:   contacts are counted with cutoff 2.2.  Using rational switching function with parameters d0=0 nn=6 mm=12
+PLUMED: Action COORDINATION
+PLUMED:   with label c_ligand
+PLUMED:   between two groups of 1 and 2 atoms
+PLUMED:   first group:
+PLUMED:   236  
+PLUMED:   second group:
+PLUMED:   237  238  
+PLUMED:   using periodic boundary conditions
+PLUMED:   contacts are counted with cutoff 2.  Using rational switching function with parameters d0=0 nn=6 mm=12
+PLUMED: Action LOWER_WALLS
+PLUMED:   with label wall_ligand
+PLUMED:   with arguments c_ligand
+PLUMED:   added component to this action:  wall_ligand.bias 
+PLUMED:   at 0.150000
+PLUMED:   with an offset 0.000000
+PLUMED:   with force constant 150.000000
+PLUMED:   and exponent 2.000000
+PLUMED:   rescaled 1.000000
+PLUMED:   added component to this action:  wall_ligand.force2 
+PLUMED: Action METAD
+PLUMED:   with label metad
+PLUMED:   with arguments c_surface c_ligand
+PLUMED:   added component to this action:  metad.bias 
+PLUMED:   Gaussian width  0.150000 0.150000  Gaussian height 4.000000
+PLUMED:   Gaussian deposition pace 300
+PLUMED:   Gaussian file HILLS
+PLUMED:   Well-Tempered Bias Factor 8.000000
+PLUMED:   Hills relaxation time (tau) 22.620498
+PLUMED:   KbT 0.043087
+PLUMED:   Bibliography [1][2]
+PLUMED: Relevant bibliography:
+PLUMED:   [1] Laio and Parrinello, PNAS 99, 12562 (2002)
+PLUMED:   [2] Barducci, Bussi, and Parrinello, Phys. Rev. Lett. 100, 020603 (2008)
+PLUMED: Please read and cite where appropriate!
+PLUMED: Action PRINT
+PLUMED:   with label @5
+PLUMED:   with stride 10
+PLUMED:   with arguments c_surface c_ligand metad.bias
+PLUMED:   on file COLVAR
+PLUMED:   with format  %f
+PLUMED: Action FLUSH
+PLUMED:   with label @6
+PLUMED:   with stride 1

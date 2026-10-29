@@ -1,0 +1,77 @@
+{"phase": "precursor_A", "step": 360, "formed_bonds": [], "broken_bonds": [{"indices": [216, 217], "elements": ["Si", "H"]}]}
+{"phase": "precursor_A", "step": 500, "formed_bonds": [{"indices": [216, 217], "elements": ["Si", "H"]}], "broken_bonds": []}
+{"phase": "precursor_A", "step": 640, "formed_bonds": [], "broken_bonds": [{"indices": [216, 217], "elements": ["Si", "H"]}]}
+{"phase": "precursor_A", "step": 760, "formed_bonds": [{"indices": [217, 219], "elements": ["H", "N"]}], "broken_bonds": []}
+{"phase": "precursor_A", "step": 820, "formed_bonds": [], "broken_bonds": [{"indices": [216, 219], "elements": ["Si", "N"]}]}
+{"phase": "precursor_A", "step": 1900, "formed_bonds": [], "broken_bonds": [{"indices": [216, 218], "elements": ["Si", "N"]}]}
+{"phase": "precursor_A", "step": 2240, "formed_bonds": [{"indices": [34, 218], "elements": ["H", "N"]}], "broken_bonds": [{"indices": [34, 80], "elements": ["H", "O"]}]}
+{"phase": "precursor_A", "step": 2300, "formed_bonds": [], "broken_bonds": [{"indices": [220, 241], "elements": ["N", "C"]}]}
+{"phase": "precursor_A", "step": 2440, "formed_bonds": [{"indices": [18, 80], "elements": ["H", "O"]}], "broken_bonds": []}
+{"phase": "precursor_A", "step": 2540, "formed_bonds": [], "broken_bonds": [{"indices": [18, 55], "elements": ["H", "O"]}]}
+{"phase": "precursor_A", "step": 2740, "formed_bonds": [{"indices": [18, 55], "elements": ["H", "O"]}, {"indices": [60, 216], "elements": ["O", "Si"]}], "broken_bonds": []}
+{"phase": "precursor_A", "step": 2820, "formed_bonds": [{"indices": [216, 219], "elements": ["Si", "N"]}], "broken_bonds": [{"indices": [18, 55], "elements": ["H", "O"]}]}
+{"phase": "precursor_A", "step": 2840, "formed_bonds": [{"indices": [26, 86], "elements": ["H", "O"]}], "broken_bonds": []}
+{"phase": "precursor_A", "step": 2860, "formed_bonds": [], "broken_bonds": [{"indices": [219, 229], "elements": ["N", "C"]}]}
+{"phase": "precursor_A", "step": 2900, "formed_bonds": [], "broken_bonds": [{"indices": [26, 60], "elements": ["H", "O"]}]}
+{"phase": "precursor_A", "step": 3060, "formed_bonds": [], "broken_bonds": [{"indices": [217, 219], "elements": ["H", "N"]}]}
+{"phase": "precursor_A", "step": 3080, "formed_bonds": [{"indices": [217, 220], "elements": ["H", "N"]}], "broken_bonds": []}
+{"phase": "precursor_A", "step": 3240, "formed_bonds": [{"indices": [216, 217], "elements": ["Si", "H"]}], "broken_bonds": []}
+{"phase": "precursor_A", "step": 3340, "formed_bonds": [], "broken_bonds": [{"indices": [216, 217], "elements": ["Si", "H"]}]}
+{"phase": "precursor_A", "step": 3360, "formed_bonds": [], "broken_bonds": [{"indices": [216, 220], "elements": ["Si", "N"]}]}
+{"phase": "precursor_A", "step": 3560, "formed_bonds": [], "broken_bonds": [{"indices": [237, 240], "elements": ["C", "H"]}]}
+{"phase": "precursor_A", "step": 3580, "formed_bonds": [{"indices": [216, 229], "elements": ["Si", "C"]}], "broken_bonds": []}
+{"phase": "precursor_A", "step": 3620, "formed_bonds": [{"indices": [237, 240], "elements": ["C", "H"]}], "broken_bonds": []}
+{"phase": "precursor_A", "step": 3940, "formed_bonds": [{"indices": [220, 238], "elements": ["N", "H"]}], "broken_bonds": []}
+{"phase": "precursor_A", "step": 3960, "formed_bonds": [], "broken_bonds": [{"indices": [237, 238], "elements": ["C", "H"]}]}
+{"phase": "precursor_A", "step": 4060, "formed_bonds": [{"indices": [29, 219], "elements": ["H", "N"]}], "broken_bonds": []}
+{"phase": "precursor_A", "step": 4080, "formed_bonds": [{"indices": [32, 91], "elements": ["H", "O"]}], "broken_bonds": []}
+{"phase": "precursor_A", "step": 4100, "formed_bonds": [], "broken_bonds": [{"indices": [29, 91], "elements": ["H", "O"]}]}
+{"phase": "precursor_A", "step": 4140, "formed_bonds": [], "broken_bonds": [{"indices": [32, 63], "elements": ["H", "O"]}]}
+{"phase": "precursor_A", "step": 4160, "formed_bonds": [{"indices": [33, 63], "elements": ["H", "O"]}], "broken_bonds": []}
+{"phase": "precursor_A", "step": 4200, "formed_bonds": [{"indices": [23, 218], "elements": ["H", "N"]}], "broken_bonds": [{"indices": [33, 78], "elements": ["H", "O"]}]}
+{"phase": "precursor_A", "step": 4220, "formed_bonds": [{"indices": [18, 55], "elements": ["H", "O"]}], "broken_bonds": [{"indices": [23, 86], "elements": ["H", "O"]}]}
+{"phase": "precursor_A", "step": 4280, "formed_bonds": [], "broken_bonds": [{"indices": [18, 80], "elements": ["H", "O"]}]}
+{"phase": "precursor_A", "step": 4300, "formed_bonds": [{"indices": [33, 78], "elements": ["H", "O"]}], "broken_bonds": []}
+{"phase": "precursor_A", "step": 4320, "formed_bonds": [], "broken_bonds": [{"indices": [33, 63], "elements": ["H", "O"]}]}
+{"phase": "precursor_A", "step": 4580, "formed_bonds": [{"indices": [32, 63], "elements": ["H", "O"]}], "broken_bonds": []}
+{"phase": "precursor_A", "step": 4620, "formed_bonds": [{"indices": [30, 80], "elements": ["H", "O"]}], "broken_bonds": [{"indices": [30, 61], "elements": ["H", "O"]}]}
+{"phase": "precursor_A", "step": 4680, "formed_bonds": [{"indices": [23, 61], "elements": ["H", "O"]}], "broken_bonds": [{"indices": [23, 218], "elements": ["H", "N"]}]}
+{"phase": "precursor_A", "step": 4720, "formed_bonds": [{"indices": [33, 63], "elements": ["H", "O"]}], "broken_bonds": [{"indices": [32, 63], "elements": ["H", "O"]}]}
+{"phase": "precursor_A", "step": 4780, "formed_bonds": [], "broken_bonds": [{"indices": [33, 78], "elements": ["H", "O"]}]}
+{"phase": "precursor_A", "step": 5000, "formed_bonds": [{"indices": [33, 78], "elements": ["H", "O"]}], "broken_bonds": [{"indices": [33, 63], "elements": ["H", "O"]}]}
+{"phase": "precursor_A", "step": 5260, "formed_bonds": [{"indices": [32, 63], "elements": ["H", "O"]}], "broken_bonds": []}
+{"phase": "precursor_A", "step": 5320, "formed_bonds": [{"indices": [216, 218], "elements": ["Si", "N"]}], "broken_bonds": []}
+{"phase": "precursor_A", "step": 5560, "formed_bonds": [{"indices": [33, 63], "elements": ["H", "O"]}], "broken_bonds": []}
+{"phase": "precursor_A", "step": 5580, "formed_bonds": [], "broken_bonds": [{"indices": [32, 63], "elements": ["H", "O"]}]}
+{"phase": "precursor_A", "step": 5600, "formed_bonds": [], "broken_bonds": [{"indices": [33, 63], "elements": ["H", "O"]}]}
+{"phase": "precursor_A", "step": 5680, "formed_bonds": [{"indices": [33, 63], "elements": ["H", "O"]}], "broken_bonds": [{"indices": [33, 78], "elements": ["H", "O"]}]}
+{"phase": "precursor_A", "step": 5700, "formed_bonds": [{"indices": [20, 78], "elements": ["H", "O"]}], "broken_bonds": []}
+{"phase": "precursor_A", "step": 5740, "formed_bonds": [], "broken_bonds": [{"indices": [20, 78], "elements": ["H", "O"]}]}
+{"phase": "precursor_A", "step": 5900, "formed_bonds": [{"indices": [32, 63], "elements": ["H", "O"]}, {"indices": [33, 78], "elements": ["H", "O"]}], "broken_bonds": [{"indices": [33, 63], "elements": ["H", "O"]}]}
+{"phase": "precursor_A", "step": 6140, "formed_bonds": [], "broken_bonds": [{"indices": [32, 63], "elements": ["H", "O"]}]}
+{"phase": "precursor_A", "step": 6340, "formed_bonds": [{"indices": [33, 63], "elements": ["H", "O"]}], "broken_bonds": [{"indices": [33, 78], "elements": ["H", "O"]}]}
+{"phase": "precursor_A", "step": 6360, "formed_bonds": [{"indices": [32, 63], "elements": ["H", "O"]}], "broken_bonds": []}
+{"phase": "precursor_A", "step": 6380, "formed_bonds": [{"indices": [33, 78], "elements": ["H", "O"]}], "broken_bonds": []}
+{"phase": "precursor_A", "step": 6400, "formed_bonds": [], "broken_bonds": [{"indices": [217, 220], "elements": ["H", "N"]}]}
+{"phase": "precursor_A", "step": 6420, "formed_bonds": [{"indices": [217, 219], "elements": ["H", "N"]}], "broken_bonds": [{"indices": [33, 63], "elements": ["H", "O"]}]}
+{"phase": "precursor_A", "step": 6460, "formed_bonds": [], "broken_bonds": [{"indices": [32, 63], "elements": ["H", "O"]}]}
+{"phase": "precursor_A", "step": 6500, "formed_bonds": [{"indices": [88, 216], "elements": ["O", "Si"]}], "broken_bonds": []}
+{"phase": "precursor_B", "step": 80, "formed_bonds": [{"indices": [216, 219], "elements": ["Si", "N"]}], "broken_bonds": []}
+{"phase": "precursor_B", "step": 100, "formed_bonds": [], "broken_bonds": [{"indices": [88, 216], "elements": ["O", "Si"]}]}
+{"phase": "precursor_B", "step": 4380, "formed_bonds": [{"indices": [216, 236], "elements": ["Si", "O"]}], "broken_bonds": []}
+{"phase": "precursor_B", "step": 4400, "formed_bonds": [], "broken_bonds": [{"indices": [216, 218], "elements": ["Si", "N"]}, {"indices": [236, 238], "elements": ["O", "H"]}]}
+{"phase": "precursor_B", "step": 40, "formed_bonds": [{"indices": [216, 228], "elements": ["Si", "C"]}], "broken_bonds": []}
+{"phase": "precursor_A", "step": 360, "formed_bonds": [], "broken_bonds": [{"indices": [216, 217], "elements": ["Si", "H"]}]}
+{"phase": "precursor_A", "step": 440, "formed_bonds": [{"indices": [216, 217], "elements": ["Si", "H"]}], "broken_bonds": []}
+{"phase": "precursor_A", "step": 640, "formed_bonds": [], "broken_bonds": [{"indices": [216, 217], "elements": ["Si", "H"]}]}
+{"phase": "precursor_A", "step": 2040, "formed_bonds": [{"indices": [86, 216], "elements": ["O", "Si"]}], "broken_bonds": []}
+{"phase": "precursor_A", "step": 2280, "formed_bonds": [{"indices": [23, 57], "elements": ["H", "O"]}, {"indices": [26, 219], "elements": ["H", "N"]}], "broken_bonds": [{"indices": [23, 86], "elements": ["H", "O"]}]}
+{"phase": "precursor_A", "step": 2320, "formed_bonds": [], "broken_bonds": [{"indices": [26, 219], "elements": ["H", "N"]}]}
+{"phase": "precursor_A", "step": 2440, "formed_bonds": [{"indices": [20, 78], "elements": ["H", "O"]}], "broken_bonds": []}
+{"phase": "precursor_A", "step": 2560, "formed_bonds": [], "broken_bonds": [{"indices": [20, 57], "elements": ["H", "O"]}]}
+{"phase": "precursor_A", "step": 3180, "formed_bonds": [{"indices": [20, 57], "elements": ["H", "O"]}], "broken_bonds": []}
+{"phase": "precursor_A", "step": 3280, "formed_bonds": [], "broken_bonds": [{"indices": [20, 57], "elements": ["H", "O"]}]}
+{"phase": "precursor_A", "step": 3380, "formed_bonds": [{"indices": [33, 63], "elements": ["H", "O"]}], "broken_bonds": []}
+{"phase": "precursor_A", "step": 3460, "formed_bonds": [], "broken_bonds": [{"indices": [33, 78], "elements": ["H", "O"]}]}
+{"phase": "precursor_A", "step": 3720, "formed_bonds": [{"indices": [55, 216], "elements": ["O", "Si"]}], "broken_bonds": []}
+{"phase": "precursor_B", "step": 160, "formed_bonds": [{"indices": [189, 216], "elements": ["Si", "Si"]}], "broken_bonds": []}

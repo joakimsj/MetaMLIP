@@ -1,0 +1,32 @@
+{
+  "removed_atom_ids": [
+    217,
+    219,
+    229,
+    230,
+    231,
+    232,
+    233,
+    234,
+    235,
+    236
+  ],
+  "removed_components_atom_ids": [
+    [
+      217
+    ],
+    [
+      219,
+      229,
+      230,
+      231,
+      232,
+      233,
+      234,
+      235,
+      236
+    ]
+  ],
+  "removed_atom_count": 10,
+  "remaining_atom_count": 235
+}

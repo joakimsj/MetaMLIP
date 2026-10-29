@@ -42,20 +42,6 @@ sampling:
   # Generic geometric clash threshold, not a chemistry-specific bond cutoff.
   clash_distance_A: 1.8
 
-plumed:
-  surface_r0_A: 2.2
-  ligand_r0_A: 2.0
-  pace: 300
-  height: 4.0
-  sigma_surface: 0.15
-  sigma_ligand: 0.15
-  biasfactor: 8.0
-  print_stride: 10
-  # Optional restraint on the aggregate ligand coordination CV.
-  ligand_lower_wall:
-    at: 0.15
-    kappa: 150.0
-
 uncertainty:
   neighbor_cutoff_A: 5.0
   energy_variance_limit: 0.0015
@@ -92,6 +78,21 @@ chemistry:
     # Verify these indices against the actual TDMAS_mol.traj atom map.
     ligand_indices: [1, 2, 3, 4]
 
+    # PLUMED settings belong to this precursor chemistry. Values are currently
+    # initialized from the former shared block and should be validated/tuned.
+    plumed:
+      surface_r0_A: 2.2
+      ligand_r0_A: 2.0
+      pace: 300
+      height: 4.0
+      sigma_surface: 0.15
+      sigma_ligand: 0.15
+      biasfactor: 8.0
+      print_stride: 10
+      ligand_lower_wall:
+        at: 0.15
+        kappa: 150.0
+
     surface_site_detection:
       enabled: true
       top_layer_tolerance_A: 1.5
@@ -116,6 +117,21 @@ chemistry:
     center_index: 0
     # Verify that these are the intended H ligand-anchor indices in H2O_mol.traj.
     ligand_indices: [1, 2]
+
+    # Independent PLUMED values for this precursor; adjust for oxidants or
+    # other chemistries rather than inheriting precursor_A's settings.
+    plumed:
+      surface_r0_A: 2.2
+      ligand_r0_A: 2.0
+      pace: 300
+      height: 4.0
+      sigma_surface: 0.15
+      sigma_ligand: 0.15
+      biasfactor: 8.0
+      print_stride: 10
+      ligand_lower_wall:
+        at: 0.15
+        kappa: 150.0
 
     surface_site_detection:
       enabled: true

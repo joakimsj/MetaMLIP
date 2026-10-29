@@ -23,7 +23,6 @@ from ase.io import read, write
 from ase.md import VelocityVerlet
 from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
 from ase.neighborlist import NeighborList
-from mace.calculators import MACECalculator
 
 from ald_connectivity import (
     build_base_cutoffs,
@@ -71,7 +70,54 @@ def load_config(path):
         if isinstance(phase_cfg, dict) and isinstance(phase_cfg.get("molecule_file"), str):
             phase_cfg["molecule_file"] = resolve_path(phase_cfg["molecule_file"])
     config["_config_path"] = str(config_path)
+    validate_config(config)
     return config
+
+
+def validate_config(config):
+    """Validate configured chemistry phases and require phase-specific PLUMED settings."""
+    phases = config.get("ald", {}).get("sequence")
+    chemistry = config.get("chemistry")
+    if not isinstance(phases, list) or not phases:
+        raise ValueError("ald.sequence must be a non-empty list of phase names")
+    if not isinstance(chemistry, dict):
+        raise ValueError("chemistry must map phase names to phase configuration")
+
+    required_plumed = (
+        "surface_r0_A", "ligand_r0_A", "pace", "height",
+        "sigma_surface", "sigma_ligand", "biasfactor", "print_stride",
+    )
+    for phase_name in phases:
+        if str(phase_name).startswith("purge_"):
+            continue
+        phase_cfg = chemistry.get(phase_name)
+        if not isinstance(phase_cfg, dict):
+            raise ValueError(f"No chemistry configuration found for phase '{phase_name}'")
+        for key in ("molecule_file", "center_index", "ligand_indices"):
+            if key not in phase_cfg:
+                raise ValueError(f"chemistry.{phase_name}.{key} is required")
+        plumed_cfg = phase_cfg.get("plumed")
+        if not isinstance(plumed_cfg, dict):
+            raise ValueError(
+                f"chemistry.{phase_name}.plumed is required; PLUMED settings are phase-specific"
+            )
+        missing = [key for key in required_plumed if key not in plumed_cfg]
+        if missing:
+            raise ValueError(
+                f"chemistry.{phase_name}.plumed is missing required settings: {', '.join(missing)}"
+            )
+        for key in ("surface_r0_A", "ligand_r0_A", "height", "sigma_surface", "sigma_ligand", "biasfactor"):
+            if float(plumed_cfg[key]) <= 0:
+                raise ValueError(f"chemistry.{phase_name}.plumed.{key} must be positive")
+        for key in ("pace", "print_stride"):
+            if int(plumed_cfg[key]) < 1:
+                raise ValueError(f"chemistry.{phase_name}.plumed.{key} must be >= 1")
+        if "ligand_lower_wall" in plumed_cfg:
+            wall = plumed_cfg["ligand_lower_wall"]
+            if not isinstance(wall, dict) or not {"at", "kappa"}.issubset(wall):
+                raise ValueError(
+                    f"chemistry.{phase_name}.plumed.ligand_lower_wall requires at and kappa"
+                )
 
 
 def plumed_indices(indices):
@@ -432,14 +478,14 @@ def bond_records(atoms, bonds):
         for i, j in sorted(bonds)
     ]
 
-def build_plumed_input(center_idx, surface_indices, ligand_indices, cfg, phase_tag):
+def build_plumed_input(center_idx, surface_indices, ligand_indices, precursor_cfg, config, phase_tag):
     """Build a two-CV metadynamics input for one reactive center."""
     p_center = plumed_indices([center_idx])[0]
     p_surface = plumed_indices(surface_indices)
     p_ligands = plumed_indices(ligand_indices)
 
-    cv = cfg["plumed"]
-    temp = float(cfg["system"]["temperature_K"])
+    cv = precursor_cfg["plumed"]
+    temp = float(config["system"]["temperature_K"])
     lines = [
         f"UNITS LENGTH=A TIME={1/(1000*units.fs)} ENERGY={units.mol/units.kJ}",
         f"c_surface: COORDINATION GROUPA={p_center} GROUPB={comma_indices(p_surface)} R_0={cv['surface_r0_A']}",
@@ -724,7 +770,7 @@ def _run_single_precursor_attempt(
                 os.remove(stale)
 
         plumed_input = build_plumed_input(
-            center, surface_group, ligand_indices, config, phase_name
+            center, surface_group, ligand_indices, precursor_cfg, config, phase_name
         )
         atoms.calc = Plumed(
             calc=md_calc,
@@ -1516,6 +1562,10 @@ def main():
     fixed = [i for i, atom in enumerate(atoms) if atom.position[2] < z_fix]
     atoms.set_constraint(FixAtoms(indices=fixed))
     MaxwellBoltzmannDistribution(atoms, temperature_K=float(cfg["system"]["temperature_K"]))
+
+    # Keep config validation and --dry-run usable without installing MACE or
+    # initializing accelerator-backed dependencies.
+    from mace.calculators import MACECalculator
 
     committee_cfg = cfg["committee"]
     md_calc = MACECalculator(

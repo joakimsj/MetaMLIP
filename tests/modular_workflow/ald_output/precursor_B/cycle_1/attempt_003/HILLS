@@ -1,0 +1,6 @@
+#! FIELDS time c_surface c_ligand sigma_c_surface sigma_c_ligand height biasf
+#! SET multivariate false
+#! SET kerneltype stretched-gaussian
+                    300   9.91990795066266e-06      1.974384045024139                   0.15                   0.15      4.571428571428571                      8
+                    600  6.831551094225338e-06      1.973455200395456                   0.15                   0.15  7.950888766914102e-06                      8
+                    900  6.007322023520458e-06      1.972544117038973                   0.15                   0.15  7.956629700588071e-06                      8

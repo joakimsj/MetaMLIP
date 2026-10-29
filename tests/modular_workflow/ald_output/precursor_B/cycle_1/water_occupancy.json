@@ -1,0 +1,19 @@
+{
+  "phase": "precursor_B",
+  "pulse_id": "cycle_1",
+  "deposited_si_atom_ids": [
+    216
+  ],
+  "minimum_waters_per_si": 1,
+  "target_waters_per_si": 2,
+  "max_adsorption_attempts": 20,
+  "occupancy": {
+    "216": []
+  },
+  "attempts": [],
+  "occupancy_counts": {
+    "216": 0
+  },
+  "minimum_success": false,
+  "full_occupancy": false
+}

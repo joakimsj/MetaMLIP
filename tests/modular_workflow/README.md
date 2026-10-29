@@ -41,11 +41,18 @@ reaction interface and avoids treating unrelated slab bonds as reaction events.
 
 This is **not yet a validated production ALD simulation**. It provides configuration loading, explicit molecular insertion, configurable CV generation, committee diagnostic hooks, trajectory logging, and a two-precursor state-machine outline.
 
+PLUMED settings are configured independently under each phase in
+`chemistry.<phase>.plumed`. There is no global PLUMED fallback: each active
+phase must provide its own coordination cutoffs, metadynamics pace/height/
+widths/bias factor, and print stride. The current example copies the former
+shared numeric values into both phases only as a migration starting point;
+precursor-specific parameters and CVs must be validated and tuned separately.
+
 Before production use:
 1. Replace every example atom index with verified atom mappings.
 2. Supply multiple independently trained MACE models if committee disagreement is intended.
 3. Validate the MACE version's `energy_var` and `forces_comm` result keys.
-4. The second precursor template is now `water.xyz` (O=0, H=1, H=2; zero-based local indices). Verify its geometry/orientation and the slab insertion region for your setup.
+4. The second precursor template in the example is `H2O_mol.traj` (O=0, H=1, H=2; zero-based local indices). Verify its geometry/orientation and the slab insertion region for your setup.
 5. Implement chemistry-aware purge. The code deliberately raises `NotImplementedError` rather than risk deleting chemisorbed fragments.
 6. Replace the simple single-center CV stopping rule with a validated surface-wide reaction and saturation test.
 7. Decide whether PLUMED bias history restarts for each pulse or is continued; this scaffold uses per-phase directories and fresh HILLS/COLVAR files.
@@ -64,6 +71,12 @@ pip install pyyaml
 
 ```bash
 python ald_workflow_surface_agnostic.py --config ald_config.yaml --dry-run
+```
+
+Run the modular-workflow unit tests from this directory with:
+
+```bash
+python -m unittest -v
 ```
 
 ## Run
@@ -88,7 +101,7 @@ a conservative geometric connectivity envelope and is not a validated chemical
 desorption classifier; inspect purge summaries and trajectories before production.
 
 For precursor A, the configured `surface_inventory.target_fraction` remains a
-debugging target (currently 0.5) over the frozen top-layer geometric candidate
+debugging target (currently 0.1) over the frozen top-layer geometric candidate
 set. It is not a claim of full physical layer coverage. Successful A centers
 are tracked by stable atom IDs for the water half-cycle.
 
